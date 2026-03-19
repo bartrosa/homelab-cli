@@ -30,3 +30,13 @@ go.work.sum
 # Editor/IDE
 # .idea/
 # .vscode/
+
+# Cursor
+# https://docs.cursor.com/context/ignore-files
+.cursorignore
+.cursorindexingignore
+
+# Local LLM context and personal Cursor rules (not committed)
+.context/
+.cursorrules
+.cursor/rules/
