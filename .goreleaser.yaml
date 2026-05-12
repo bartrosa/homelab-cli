@@ -1,0 +1,47 @@
+version: 2
+
+project_name: homelab-cli
+
+before:
+  hooks:
+    - go mod tidy
+
+builds:
+  - id: lab
+    main: ./cmd/lab
+    binary: lab
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+      - darwin
+    goarch:
+      - amd64
+      - arm64
+    ldflags:
+      - -s -w
+      - -X __MODULE_PATH__/internal/buildinfo.Version={{.Version}}
+      - -X __MODULE_PATH__/internal/buildinfo.Commit={{.Commit}}
+      - -X __MODULE_PATH__/internal/buildinfo.Date={{.Date}}
+
+archives:
+  - id: lab
+    builds:
+      - lab
+    format: tar.gz
+    name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
+
+checksum:
+  name_template: "{{ .ProjectName }}_{{ .Version }}_checksums.txt"
+  algorithm: sha256
+
+changelog:
+  use: github
+  filters:
+    exclude:
+      - "^docs:"
+      - "^chore:"
+      - "^test:"
+
+# brews:
+#   - # TODO: add Homebrew tap after repository is public and naming is final
