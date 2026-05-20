@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"sort"
 	"strings"
 
 	"github.com/spf13/viper"
@@ -15,11 +16,63 @@ type Config struct {
 	LogLevel  string `mapstructure:"log_level"`
 	LogFormat string `mapstructure:"log_format"`
 
+	Homelab   HomelabConfig   `mapstructure:"homelab"`
 	Bootstrap BootstrapConfig `mapstructure:"bootstrap"`
 	Repos     ReposConfig     `mapstructure:"repos"`
 	Services  ServicesConfig  `mapstructure:"services"`
+	SSH       SSHConfig       `mapstructure:"ssh"`
+	Server    ServerConfig    `mapstructure:"server"`
 	Cluster   ClusterConfig   `mapstructure:"cluster"`
 	Storage   StorageConfig   `mapstructure:"storage"`
+}
+
+// HomelabConfig points at the personal homelab repo for scripts and compose stacks.
+type HomelabConfig struct {
+	Root string `mapstructure:"root"`
+}
+
+// SSHConfig holds SSH host inventory.
+type SSHConfig struct {
+	Hosts map[string]SSHHost `mapstructure:"hosts"`
+}
+
+// SSHHost describes one SSH target.
+type SSHHost struct {
+	Host         string `mapstructure:"host"`
+	User         string `mapstructure:"user"`
+	Port         int    `mapstructure:"port"`
+	IdentityFile string `mapstructure:"identity_file"`
+}
+
+// Target returns user@host for ssh.
+func (h SSHHost) Target() string {
+	user := h.User
+	if user == "" {
+		user = "root"
+	}
+	return user + "@" + h.Host
+}
+
+// SSHHostNames returns sorted host alias keys.
+func (c *Config) SSHHostNames() []string {
+	if c == nil || len(c.SSH.Hosts) == 0 {
+		return nil
+	}
+	names := make([]string, 0, len(c.SSH.Hosts))
+	for k := range c.SSH.Hosts {
+		names = append(names, k)
+	}
+	sort.Strings(names)
+	return names
+}
+
+// ServerConfig is the default remote homelab server (rsync / ssh run).
+type ServerConfig struct {
+	Host     string `mapstructure:"host"`
+	User     string `mapstructure:"user"`
+	Port     int    `mapstructure:"port"`
+	Path     string `mapstructure:"path"`
+	Password string `mapstructure:"password"` // optional; prefer SSH keys
 }
 
 // BootstrapConfig describes bootstrap profiles and defaults.
@@ -66,6 +119,9 @@ func Default() *Config {
 	return &Config{
 		LogLevel:  "info",
 		LogFormat: "text",
+		Homelab: HomelabConfig{
+			Root: "",
+		},
 		Bootstrap: BootstrapConfig{
 			DefaultProfile: "default",
 			Profiles:       map[string]any{},
@@ -82,6 +138,12 @@ func Default() *Config {
 		Cluster: ClusterConfig{
 			Kubeconfig: defaultKubeconfigPath(),
 			Context:    "",
+		},
+		SSH: SSHConfig{
+			Hosts: map[string]SSHHost{},
+		},
+		Server: ServerConfig{
+			Port: 22,
 		},
 		Storage: StorageConfig{
 			Endpoint:  "",
@@ -141,6 +203,8 @@ func bindDefaults(v *viper.Viper) {
 	d := Default()
 	v.SetDefault("log_level", d.LogLevel)
 	v.SetDefault("log_format", d.LogFormat)
+	v.SetDefault("homelab.root", d.Homelab.Root)
+	v.SetDefault("server.port", d.Server.Port)
 	v.SetDefault("bootstrap.default_profile", d.Bootstrap.DefaultProfile)
 	v.SetDefault("repos.root", d.Repos.Root)
 	v.SetDefault("repos.backup_dir", d.Repos.BackupDir)

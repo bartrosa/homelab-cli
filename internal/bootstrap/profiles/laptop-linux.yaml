@@ -1,0 +1,15 @@
+name: laptop-linux
+description: Developer laptop on Ubuntu/Debian (apt + mise)
+steps:
+  - type: pkg
+    packages:
+      - ripgrep
+      - jq
+      - git
+      - ffmpeg
+  - type: toolchain
+    languages:
+      - go
+      - rust
+      - python
+      - node

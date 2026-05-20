@@ -1,7 +1,7 @@
 package commands
 
 import (
-	"__MODULE_PATH__/internal/clierrors"
+	"github.com/bartrosa/homelab-cli/internal/clierrors"
 	"fmt"
 
 	"github.com/spf13/cobra"

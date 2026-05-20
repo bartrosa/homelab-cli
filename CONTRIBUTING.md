@@ -2,7 +2,7 @@
 
 ## Requirements
 
-- Go **1.23+** (newer toolchains welcome; see README for the `go` directive rationale).
+- Go **1.25+** (see `go.mod`).
 - `make`, `git`.
 - Optional: `goreleaser` locally if you are cutting releases.
 
@@ -34,7 +34,7 @@ Prefer prefixes: `feat/…`, `fix/…`, `chore/…`, `docs/…`.
 
 ## Pull requests
 
-- Keep scope tight; scaffolding PRs should not sneak in real adapters.
+- Keep scope tight; one feature or fix per PR when possible.
 - Update [`CHANGELOG.md`](CHANGELOG.md) under `[Unreleased]` when user-visible behavior changes.
 
 Thank you for helping grow `lab`!

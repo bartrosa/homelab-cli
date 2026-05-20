@@ -1,8 +1,8 @@
 package commands
 
 import (
-	"__MODULE_PATH__/internal/buildinfo"
-	"__MODULE_PATH__/internal/logging"
+	"github.com/bartrosa/homelab-cli/internal/buildinfo"
+	"github.com/bartrosa/homelab-cli/internal/logging"
 	"encoding/json"
 	"fmt"
 	"strings"
