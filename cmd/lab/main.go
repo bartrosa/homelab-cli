@@ -2,7 +2,7 @@
 package main
 
 import (
-	"__MODULE_PATH__/internal/cli"
+	"github.com/bartrosa/homelab-cli/internal/cli"
 	"context"
 	"os"
 	"os/signal"
