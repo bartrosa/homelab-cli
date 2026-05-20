@@ -1,7 +1,7 @@
 SHELL := /bin/bash
 .DEFAULT_GOAL := help
 
-MODULE_PATH := __MODULE_PATH__
+MODULE_PATH := github.com/bartrosa/homelab-cli
 BIN_DIR := bin
 BINARY := $(BIN_DIR)/lab
 

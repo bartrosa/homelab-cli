@@ -20,9 +20,9 @@ builds:
       - arm64
     ldflags:
       - -s -w
-      - -X __MODULE_PATH__/internal/buildinfo.Version={{.Version}}
-      - -X __MODULE_PATH__/internal/buildinfo.Commit={{.Commit}}
-      - -X __MODULE_PATH__/internal/buildinfo.Date={{.Date}}
+      - -X github.com/bartrosa/homelab-cli/internal/buildinfo.Version={{.Version}}
+      - -X github.com/bartrosa/homelab-cli/internal/buildinfo.Commit={{.Commit}}
+      - -X github.com/bartrosa/homelab-cli/internal/buildinfo.Date={{.Date}}
 
 archives:
   - id: lab
