@@ -1,0 +1,56 @@
+# Example lab configuration — copy to ~/.config/homelab-cli/config.yaml
+
+log_level: info
+log_format: text
+
+# Personal homelab repo (compose, postgres YAML, project-initiators)
+homelab:
+  root: ~/Projects/PERSONAL/homelab
+
+# Default remote server for: lab ssh sync, lab server run, lab server deploy
+server:
+  host: 192.168.1.10
+  user: bart
+  port: 22
+  path: ~/homelab
+
+bootstrap:
+  default_profile: laptop-macos
+  profiles:
+    dgx-spark:
+      name: dgx-spark
+      description: Ubuntu ML host (custom steps)
+      steps:
+        - type: pkg
+          packages: [git, curl, jq, podman]
+        - type: script
+          script: scripts/install-server-deps.sh
+
+repos:
+  root: ~/src
+  backup_dir: ~/backups/repos/gitlab
+  providers:
+    - name: gitlab-personal
+      kind: gitlab
+      host: gitlab.com
+      token_env: GITLAB_TOKEN
+
+services:
+  stacks_dir: ~/.config/homelab-cli/stacks
+  runtime: podman-compose
+
+ssh:
+  hosts:
+    homelab:
+      host: 192.168.1.10
+      user: bart
+      port: 22
+      identity_file: ~/.ssh/id_ed25519
+
+cluster:
+  kubeconfig: ~/.kube/config
+  context: ""
+
+storage:
+  endpoint: ""
+  access_key: ""

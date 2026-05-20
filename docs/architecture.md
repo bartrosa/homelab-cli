@@ -1,47 +1,96 @@
 # Architecture
 
-`lab` is a thin orchestration layer: Cobra commands call into small internal packages that will grow **adapters** for external tools. This PR wires the skeleton only; adapters arrive in focused follow-ups.
+`lab` is an orchestration CLI: Cobra commands load config and session context, then call focused packages that plan work and invoke external tools where necessary.
 
-## High-level flow
+## Request flow
 
 ```
 ┌─────────────┐   persistent flags   ┌──────────────┐
-│  Cobra CLI  │ ───────────────────► │ Viper config │
+│  Cobra CLI  │ ───────────────────► │ Viper/config │
 │  (cmd tree) │                      └──────┬───────┘
 └──────┬──────┘                             │
-       │ PersistentPreRunE                │
-       ▼                                   │
-┌──────────────┐     stderr/json/text ┌───▼────────────┐
-│ slog.Logger  │ ◄────────────────────│ logging.New() │
-└──────┬───────┘                      └────────────────┘
-       │
+       │ PersistentPreRunE                  │
+       ▼                                    │
+┌──────────────┐   lipgloss (optional) ┌───▼────────────┐
+│ appctx.Session│ ◄───────────────────│ ui.NewStyles() │
+│ + slog.Logger │                      └────────────────┘
+└──────┬───────┘
+       │ RunE
        ▼
 ┌───────────────────────────────────────────────┐
-│ Command RunE (stubs today, real work later)   │
+│ Domain packages (bootstrap, media, server, …) │
+│  → executil.Runner (dry-run, logging)         │
+│  → exec: ssh, wget, podman-compose, …       │
 └───────────────────────────────────────────────┘
 ```
 
-## Planned adapters (not implemented in PR #1)
+## Implemented packages
 
-| Domain | Planned abstraction | Backing tools |
-|--------|----------------------|---------------|
-| Packages | `Packager` interface + OS autodetection | `brew`, `apt`, `dnf`, `pacman`, … |
-| Toolchains | `ToolchainRunner` | `mise` (install/use/list) |
-| Services | `StackRunner` | compose templates + `docker`/`podman` |
-| Repos | `Provider` + local git | `go-git` + GitHub/GitLab/Gitea HTTP APIs |
-| Cluster | `ClusterClient` | `k3s` install scripts + `client-go` |
-| Models / ML | thin wrappers | `ollama`, `vLLM`, HF cache helpers |
-| MCP | stdio server | subset of `lab` commands exposed as MCP tools |
+| Package | Role | External tools |
+|---------|------|----------------|
+| `internal/bootstrap` | Embedded YAML profiles; steps: pkg, toolchain, script | homelab bash for `script:` steps only |
+| `internal/packager` | OS package install | brew, apt, dnf, rpm-ostree |
+| `internal/toolchain` | Language runtimes | mise |
+| `internal/services` | Compose stack up/down/list/logs | podman-compose / docker compose |
+| `internal/mlstack` | Ensure ml-stack is up | podman-compose |
+| `internal/server` | SSH remote run, rsync deploy | ssh, rsync |
+| `internal/postgres` | YAML → PG apply | TCP to PostgreSQL (pgx) |
+| `internal/ssh` | Connect + sync | ssh, rsync |
+| `internal/repos` | GitLab backup | homelab Python script (interim) |
+| `internal/templates` | Project scaffolds | filesystem copy from homelab |
+| `internal/media` | HEIC convert | heif-convert |
+| `internal/system` | Bootable USB | HTTP to mirrors, wget, sha256sum, dd |
+| `internal/baremetal` | DB installers on Linux | curl, apt, sudo, systemd |
 
-## Package layout conventions
+## Cross-cutting
 
-- `cmd/lab` — `main` only.
-- `internal/cli` — root command, wiring, shared execution helpers.
-- `internal/cli/commands` — individual command constructors (stubs).
-- `internal/clierrors` — sentinel errors shared without import cycles.
-- `internal/config`, `internal/logging`, `internal/buildinfo` — cross-cutting utilities.
-- `pkg/` — reserved for libraries that may become reusable outside this binary.
+| Package | Role |
+|---------|------|
+| `internal/config` | YAML + `LAB_*` env |
+| `internal/homelabroot` | Resolve homelab repo path |
+| `internal/executil` | Command runner with dry-run |
+| `internal/ui` | lipgloss sections and tables |
+| `internal/platform` | OS detection (brew vs apt vs …) |
+| `internal/logging` | slog on context |
+| `internal/buildinfo` | Version ldflags |
 
-## MCP direction
+## Command groups (Cobra)
 
-`lab mcp serve` will eventually expose a stdio MCP server so Cursor/VS Code can call curated, read-only or guarded operations (list hosts, validate config, dry-run plans). That work is intentionally deferred until the underlying commands are real.
+| Group ID | Commands |
+|----------|----------|
+| `foundation` | bootstrap, pkg, toolchain, services |
+| `repos` | repos |
+| `infra` | server, postgres, baremetal, system, ssh, cluster, gpu, containers, net, storage |
+| `data` | models, data, notebooks, mlops, vector, pipelines, agents |
+| `workflow` | obs, logs, templates, media, mcp |
+| `meta` | version |
+
+Stub commands return a consistent “not implemented yet” error via `commands.StubRunE`.
+
+## Homelab repo boundary
+
+| Stays in homelab git | Lives in homelab-cli |
+|----------------------|----------------------|
+| `ml-stack/podman-compose.yml`, `.env.example` | `lab services`, `lab services ensure` |
+| `postgres/config/instances.yaml` | `lab postgres apply` |
+| `project-initiators/*` | `lab templates new` |
+| Docs, experiments, CAD notes | User-facing docs in `docs/` |
+
+Orchestration and new features belong in Go here. See [`homelab-migration.md`](homelab-migration.md).
+
+## Planned work
+
+| Area | Direction |
+|------|-----------|
+| Repos | Go GitLab API + go-git instead of Python backup |
+| Bootstrap | Replace `script:` steps with native Go where practical |
+| Cluster / ML | Thin adapters over kubectl, ollama, etc. |
+| MCP | `lab mcp serve` exposing guarded read-only tools |
+
+## Layout conventions
+
+- `cmd/lab` — `main` only
+- `internal/cli` — root command wiring
+- `internal/cli/commands` — per-domain command constructors
+- `internal/cli/appctx` — `Session` on `context.Context`
+- `pkg/` — reserved for future public libraries

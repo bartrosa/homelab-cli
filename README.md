@@ -1,128 +1,148 @@
 # homelab-cli
 
-[![CI](https://github.com/OWNER/REPO/actions/workflows/ci.yml/badge.svg)](https://github.com/OWNER/REPO/actions/workflows/ci.yml)
+[![CI](https://github.com/bartrosa/homelab-cli/actions/workflows/ci.yml/badge.svg)](https://github.com/bartrosa/homelab-cli/actions/workflows/ci.yml)
 [![License](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
-[![Go](https://img.shields.io/badge/go-1.23.0+-00ADD8.svg)](https://go.dev/dl/)
+[![Go](https://img.shields.io/badge/go-1.25+-00ADD8.svg)](https://go.dev/dl/)
 
-> Replace `OWNER/REPO` in badge URLs after you publish the repository.
+**`lab`** is a single CLI for homelab automation: bootstrap laptops and servers, manage toolchains and compose stacks, sync your [homelab](https://github.com/bartrosa/homelab) repo to remote hosts, provision PostgreSQL, download media, and create bootable USB installers — with orchestration in Go and thin wrappers around standard system tools.
 
-**Module path placeholder:** replace `__MODULE_PATH__` in `go.mod`, imports, and docs with your real module path (for example `github.com/you/homelab-cli`).
+Module: `github.com/bartrosa/homelab-cli`
 
-CLI for end-to-end homelab automation — from bare metal to GPU-served LLMs.
+## Design principles
 
-## Why?
+- **Orchestration in Go** — workflows, config, retries, and terminal UI live in this repo.
+- **No homelab shell/Python scripts from `lab`** — logic migrated here; the personal homelab repo remains the source of compose files, YAML, and project templates.
+- **External binaries where required** — `ssh`, `podman-compose`, `wget`, `dd`, etc. See [`docs/external-binaries.md`](docs/external-binaries.md).
 
-Homelab automation tends to sprawl across ad-hoc shell scripts, README fragments, and one-off Ansible snippets. `lab` is a single entry point that will grow into a declaratively configured toolkit: one binary, consistent UX, and clear seams for adapters (package managers, compose stacks, Git providers, cluster clients).
+## What works today
 
-## What can it do?
+| Area | Commands | Notes |
+|------|----------|--------|
+| **Bootstrap** | `bootstrap laptop\|server\|profile\|list` | Embedded YAML profiles (macOS, Linux, Silverblue, Ubuntu server) |
+| **Packages** | `pkg install\|ensure\|list` | brew, apt, dnf, rpm-ostree |
+| **Toolchains** | `toolchain install\|list\|use` | via [mise](https://mise.jdx.dev/) |
+| **Services** | `services up\|down\|list\|logs\|ensure` | homelab `ml-stack` compose |
+| **Server** | `server run`, `server deploy` | SSH + rsync; deploy can provision PG and start compose |
+| **PostgreSQL** | `postgres apply` | Idempotent apply from `instances.yaml` (pgx) |
+| **Bare metal** | `baremetal install` | Qdrant, Milvus, ClickHouse on Linux |
+| **System** | `system usb list`, `system usb` | Bootable USB; ISOs discovered from Ubuntu/Fedora mirrors |
+| **SSH** | `ssh connect`, `ssh sync` | Host inventory from config |
+| **Repos** | `repos backup` | GitLab account mirror (homelab Python script today) |
+| **Templates** | `templates list\|new` | Copy `project-initiators/` from homelab |
+| **Media** | `media heic` | HEIC→JPEG via `heif-convert` |
+| **Meta** | `version` | Build metadata |
 
-The command tree is grouped into eight areas. **Everything is scaffolded today** except `lab version`, which prints build metadata.
+**Planned (stubs):** `cluster`, `gpu`, `models`, `mlops`, `vector`, `pipelines`, `agents`, `obs`, `logs`, `mcp`, most of `repos` beyond backup.
 
-1. **Bootstrap** — laptop/server profiles, baseline packages, dotfiles, and hardening.
-2. **Toolchains** — language runtimes via `mise` wrappers (Go, Node, Bun, Deno, Python, Rust, BEAM, Zig, Java, Ruby, …).
-3. **Services** — local Postgres/Redis/Mongo/Kafka/RabbitMQ/MinIO/ClickHouse/etcd/NATS stacks via compose.
-4. **Repos** — bulk clone/mirror/backup across GitHub, GitLab, Gitea, and Codeberg.
-5. **Cluster & net** — k3s/k8s helpers, GPU diagnostics, SSH inventory, Tailscale/WireGuard.
-6. **Data / AI / ML** — models, datasets, notebooks, MLOps, vector DBs, local pipelines, agents.
-7. **Observability** — Prometheus/Grafana/Loki/Tempo bundles plus aggregated logs.
-8. **Workflow** — project templates, optional MCP stdio server for IDE integrations.
+Full command tables: [`docs/commands.md`](docs/commands.md).
 
 ## Installation
 
 ### Build from source
 
 ```bash
-git clone https://github.com/OWNER/REPO.git
+git clone https://github.com/bartrosa/homelab-cli.git
 cd homelab-cli
-make install   # or: make build && ./bin/lab
+make install    # or: make build && ./bin/lab
 ```
+
+Requires **Go 1.25+**.
 
 ### `go install`
 
 ```bash
-go install __MODULE_PATH__/cmd/lab@latest
+go install github.com/bartrosa/homelab-cli/cmd/lab@latest
 ```
 
-### GitHub Releases
+### Releases
 
-After the first tagged release, prefer the checksum-verified archives published by GoReleaser. A convenience installer script lives at `scripts/install.sh` (TODO until release artifacts exist).
+Tagged releases publish binaries via GoReleaser. You can also use `scripts/install.sh` when release artifacts are available.
 
 ## Quick start
 
+1. Copy and edit config:
+
 ```bash
-lab bootstrap laptop                    # set up a fresh machine (stub)
-lab toolchain install go bun rust       # install language toolchains (stub)
-lab services up postgres redis          # spin up databases (stub)
-lab repos clone "github.com/me/*"       # clone all your repos (stub)
-lab models pull llama3                  # pull a local LLM (stub)
-lab cluster status                      # check homelab k3s (stub)
-lab version                             # ✅ prints build info
+mkdir -p ~/.config/homelab-cli
+cp docs/config.example.yaml ~/.config/homelab-cli/config.yaml
+# set homelab.root to your homelab repo path
 ```
 
-## Commands
+2. Preview bootstrap, install tools, run stacks:
 
-See [`docs/commands.md`](docs/commands.md) for the full reference. Summary:
+```bash
+lab bootstrap laptop --dry-run
+lab pkg ensure ripgrep jq git
+lab toolchain install go rust python
+lab services list
+lab services up ml-stack
+```
 
-| Group | Commands | Status |
-|------|----------|--------|
-| Foundation | `bootstrap`, `pkg`, `toolchain`, `services` | 🚧 planned |
-| Repos | `repos` | 🚧 planned |
-| Infra | `cluster`, `gpu`, `ssh`, `containers`, `net`, `storage` | 🚧 planned |
-| Data / AI / ML | `models`, `data`, `notebooks`, `mlops`, `vector`, `pipelines`, `agents` | 🚧 planned |
-| Workflow | `obs`, `logs`, `templates`, `mcp` | 🚧 planned |
-| Meta | `version` | ✅ ready |
+3. Remote server (set `server.*` in config):
+
+```bash
+lab ssh sync
+lab server deploy provision    # rsync + postgres apply (local, against PG in YAML)
+lab server deploy compose      # rsync + podman-compose on server
+lab services ensure            # ml-stack up + service URLs
+```
+
+4. USB installer:
+
+```bash
+lab system usb list
+lab system usb --distro ubuntu-lts-24.04 --device /dev/sdb --workdir ~/Downloads
+```
+
+## Global flags
+
+| Flag | Description |
+|------|-------------|
+| `--config` | Config file (default `~/.config/homelab-cli/config.yaml`) |
+| `--homelab-root` | Override `homelab.root` / `LAB_HOMELAB_ROOT` |
+| `--dry-run` | Print planned external commands without running them |
+| `--no-color` | Disable lipgloss styling |
+| `--log-level` | `debug\|info\|warn\|error` |
+| `--log-format` | `text\|json` |
+
+Environment variables use the `LAB_` prefix (e.g. `LAB_SERVER_HOST`, `LAB_HOMELAB_ROOT`).
 
 ## Configuration
 
-Precedence: **CLI flags → environment (`LAB_*`) → YAML file → defaults**.
+Precedence: **CLI flags → `LAB_*` env → YAML → defaults**.
 
-Default config path: `~/.config/homelab-cli/config.yaml`.
+| Key | Purpose |
+|-----|---------|
+| `homelab.root` | Path to personal homelab repo (compose, templates, postgres config) |
+| `server.host`, `server.user`, `server.port`, `server.path` | Default remote host for rsync/SSH |
+| `ssh.hosts` | Named SSH targets for `lab ssh connect` |
+| `services.runtime` | `podman-compose` or `docker` |
+| `repos.providers` | Git hosting tokens for future clone/backup |
 
-Example:
+Details: [`docs/configuration.md`](docs/configuration.md) · example: [`docs/config.example.yaml`](docs/config.example.yaml).
 
-```yaml
-log_level: info
-log_format: text
+## Documentation
 
-bootstrap:
-  default_profile: default
-  profiles: {}
+| Document | Description |
+|----------|-------------|
+| [`docs/commands.md`](docs/commands.md) | Command reference with status |
+| [`docs/configuration.md`](docs/configuration.md) | Config keys and precedence |
+| [`docs/architecture.md`](docs/architecture.md) | Packages and data flow |
+| [`docs/external-binaries.md`](docs/external-binaries.md) | Required host tools |
+| [`docs/homelab-migration.md`](docs/homelab-migration.md) | homelab repo → `lab` migration map |
+| [`CHANGELOG.md`](CHANGELOG.md) | Release notes |
 
-repos:
-  root: ~/src
-  backup_dir: ~/backups/repos
-  providers:
-    - name: github-personal
-      kind: github
-      host: github.com
-      token_env: GH_TOKEN
+## Relationship to the homelab repo
 
-services:
-  stacks_dir: ~/.config/homelab-cli/stacks
-  runtime: podman
-
-cluster:
-  kubeconfig: ~/.kube/config
-  context: ""
-
-storage:
-  endpoint: ""
-  access_key: ""
-```
-
-More detail: [`docs/configuration.md`](docs/configuration.md).
+**homelab-cli** is the productized CLI. The **homelab** git repo is the “scratchpad”: compose stacks, postgres `instances.yaml`, `project-initiators/`, and docs. Point `homelab.root` at that checkout so `lab` can find compose files and templates. New automation should land in Go here; homelab scripts are retired as features migrate.
 
 ## Development
 
 ```bash
-make ci
+make ci    # fmt, vet, lint, test, build
 ```
 
-See [`CONTRIBUTING.md`](CONTRIBUTING.md) for conventions, tooling versions, and PR expectations.
-
-## Go version note
-
-`go.mod` currently declares `go 1.23.0` so `golangci-lint` releases (built with older toolchains) can analyze the module without tripping over `go 1.25` language gates. You can still compile with Go 1.25+ locally. When golangci-lint ships binaries built with Go ≥1.25, bump the `go` directive to match your target.
+See [`CONTRIBUTING.md`](CONTRIBUTING.md).
 
 ## License
 
