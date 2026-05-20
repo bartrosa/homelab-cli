@@ -1,18 +1,25 @@
 package commands
 
-import "github.com/spf13/cobra"
+import (
+	"github.com/bartrosa/homelab-cli/internal/repos"
+	"github.com/bartrosa/homelab-cli/internal/ui"
+	"github.com/spf13/cobra"
+)
 
 // NewReposCmd wires multi-repo workflows across Git providers.
 func NewReposCmd() *cobra.Command {
+	var jobs int
+
 	cmd := &cobra.Command{
 		Use:   "repos",
 		Short: "Clone, mirror, and synchronize repositories",
-		Long: `repos integrates with GitHub, GitLab, Gitea, and Codeberg using REST APIs plus
-local git operations for bulk workflows across organizations and patterns.`,
+		Long: `repos integrates with Git hosting providers for bulk workflows.
+GitLab backup uses tools/gitlab/backup_account.py from your homelab repo.`,
 		RunE: func(c *cobra.Command, _ []string) error {
 			return c.Help()
 		},
 	}
+	AddDryRunFlag(cmd)
 
 	cmd.AddCommand(
 		&cobra.Command{
@@ -25,10 +32,15 @@ local git operations for bulk workflows across organizations and patterns.`,
 		},
 		&cobra.Command{
 			Use:     "backup",
-			Short:   "Mirror configured repositories to a local path or object storage",
-			Example: "  lab repos backup",
+			Short:   "Mirror GitLab projects to local backup dir",
+			Example: "  lab repos backup\n  lab repos backup --jobs 4",
 			Args:    cobra.NoArgs,
-			RunE:    StubRunE(),
+			RunE: func(cmd *cobra.Command, _ []string) error {
+				setDryRun(cmd)
+				s := session(cmd)
+				ui.Section(stdout(cmd), s.Styles, "repos backup", "GitLab mirror")
+				return repos.GitLabBackup(cmd.Context(), s.Config, s.HomelabRoot, s.DryRun, stdout(cmd), stderr(cmd), jobs)
+			},
 		},
 		&cobra.Command{
 			Use:     "sync",
@@ -52,6 +64,8 @@ local git operations for bulk workflows across organizations and patterns.`,
 			RunE:    StubRunE(),
 		},
 	)
+
+	cmd.PersistentFlags().IntVar(&jobs, "jobs", 2, "parallel git jobs for GitLab backup")
 
 	return cmd
 }
