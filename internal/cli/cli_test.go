@@ -1,11 +1,10 @@
 package cli_test
 
 import (
-	"__MODULE_PATH__/internal/cli"
+	"github.com/bartrosa/homelab-cli/internal/cli"
 	"bytes"
 	"context"
 	"encoding/json"
-	"errors"
 	"io"
 	"os"
 	"path/filepath"
@@ -84,15 +83,40 @@ func TestVersion_debugJSONLoggingToStderr(t *testing.T) {
 	require.Contains(t, stderr.String(), "DEBUG")
 }
 
-func TestBootstrapLaptop_notImplemented(t *testing.T) {
+func TestBootstrapLaptop_dryRun(t *testing.T) {
 	isolatedHome(t)
 
 	root := cli.NewRootCmd()
 	root.SetOut(io.Discard)
 	root.SetErr(io.Discard)
-	root.SetArgs([]string{"bootstrap", "laptop"})
+	root.SetArgs([]string{"--dry-run", "--homelab-root", t.TempDir(), "bootstrap", "laptop"})
 
 	err := root.ExecuteContext(context.Background())
-	require.Error(t, err)
-	require.True(t, errors.Is(err, cli.ErrNotImplemented))
+	require.NoError(t, err)
+}
+
+func TestBootstrapList(t *testing.T) {
+	isolatedHome(t)
+
+	root := cli.NewRootCmd()
+	var buf bytes.Buffer
+	root.SetOut(&buf)
+	root.SetErr(&buf)
+	root.SetArgs([]string{"bootstrap", "list"})
+
+	require.NoError(t, root.ExecuteContext(context.Background()))
+	require.Contains(t, buf.String(), "laptop-macos")
+}
+
+func TestMediaHelp(t *testing.T) {
+	isolatedHome(t)
+
+	root := cli.NewRootCmd()
+	var buf bytes.Buffer
+	root.SetOut(&buf)
+	root.SetErr(&buf)
+	root.SetArgs([]string{"media", "--help"})
+
+	require.NoError(t, root.ExecuteContext(context.Background()))
+	require.Contains(t, buf.String(), "heic")
 }

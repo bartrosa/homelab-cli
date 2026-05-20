@@ -1,10 +1,12 @@
 package cli
 
 import (
-	"__MODULE_PATH__/internal/cli/commands"
-	"__MODULE_PATH__/internal/config"
-	"__MODULE_PATH__/internal/logging"
 	"context"
+	"github.com/bartrosa/homelab-cli/internal/cli/appctx"
+	"github.com/bartrosa/homelab-cli/internal/cli/commands"
+	"github.com/bartrosa/homelab-cli/internal/config"
+	"github.com/bartrosa/homelab-cli/internal/logging"
+	"github.com/bartrosa/homelab-cli/internal/ui"
 	"errors"
 	"fmt"
 	"os"
@@ -21,10 +23,12 @@ func Execute(ctx context.Context) error {
 // NewRootCmd wires the full command tree for the lab CLI.
 func NewRootCmd() *cobra.Command {
 	var (
-		configPath string
-		logLevel   string
-		logFormat  string
-		noColor    bool
+		configPath  string
+		logLevel    string
+		logFormat   string
+		noColor     bool
+		dryRun      bool
+		homelabRoot string
 	)
 
 	root := &cobra.Command{
@@ -59,7 +63,16 @@ running local data services, mirroring repositories, operating clusters, and sup
 			}
 
 			logger := logging.New(cmd.ErrOrStderr(), level, format, noColor)
-			cmd.SetContext(logging.WithLogger(cmd.Context(), logger))
+			ctx := logging.WithLogger(cmd.Context(), logger)
+			session := &appctx.Session{
+				Config:      cfg,
+				ConfigPath:  path,
+				DryRun:      dryRun,
+				NoColor:     noColor,
+				Styles:      ui.NewStyles(cmd.OutOrStdout(), noColor),
+				HomelabRoot: homelabRoot,
+			}
+			cmd.SetContext(appctx.WithSession(ctx, session))
 			return nil
 		},
 		RunE: func(cmd *cobra.Command, _ []string) error {
@@ -71,6 +84,8 @@ running local data services, mirroring repositories, operating clusters, and sup
 	root.PersistentFlags().StringVar(&logLevel, "log-level", "info", "log level (debug|info|warn|error)")
 	root.PersistentFlags().StringVar(&logFormat, "log-format", "text", "log format (text|json)")
 	root.PersistentFlags().BoolVar(&noColor, "no-color", false, "disable colorized output")
+	root.PersistentFlags().BoolVar(&dryRun, "dry-run", false, "print planned actions without executing external commands")
+	root.PersistentFlags().StringVar(&homelabRoot, "homelab-root", "", "path to homelab repo (overrides config homelab.root and LAB_HOMELAB_ROOT)")
 
 	root.AddGroup(&cobra.Group{ID: "foundation", Title: "Foundation — bootstrap & install"})
 	root.AddGroup(&cobra.Group{ID: "repos", Title: "Repos — multi-repo management"})
@@ -93,7 +108,11 @@ running local data services, mirroring repositories, operating clusters, and sup
 
 	add(commands.NewClusterCmd(), "infra")
 	add(commands.NewGPUCmd(), "infra")
+	add(commands.NewServerCmd(), "infra")
 	add(commands.NewSSHCmd(), "infra")
+	add(commands.NewPostgresCmd(), "infra")
+	add(commands.NewBaremetalCmd(), "infra")
+	add(commands.NewSystemCmd(), "infra")
 	add(commands.NewContainersCmd(), "infra")
 	add(commands.NewNetCmd(), "infra")
 	add(commands.NewStorageCmd(), "infra")
@@ -109,6 +128,7 @@ running local data services, mirroring repositories, operating clusters, and sup
 	add(commands.NewObsCmd(), "workflow")
 	add(commands.NewLogsCmd(), "workflow")
 	add(commands.NewTemplatesCmd(), "workflow")
+	add(commands.NewMediaCmd(), "workflow")
 	add(commands.NewMCPCmd(), "workflow")
 
 	add(commands.NewVersionCmd(), "meta")
