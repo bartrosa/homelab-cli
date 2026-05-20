@@ -1,0 +1,11 @@
+name: server-ubuntu
+description: Ubuntu/Debian homelab server baseline (apt + podman stack prep)
+steps:
+  - type: pkg
+    packages:
+      - git
+      - curl
+      - jq
+      - podman
+  - type: script
+    script: scripts/install-server-deps.sh

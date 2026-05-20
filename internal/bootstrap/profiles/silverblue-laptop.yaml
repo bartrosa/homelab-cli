@@ -1,0 +1,13 @@
+name: silverblue-laptop
+description: Fedora Silverblue laptop (rpm-ostree packages + mise toolchains)
+steps:
+  - type: pkg
+    packages:
+      - git
+      - jq
+      - ffmpeg-free
+  - type: toolchain
+    languages:
+      - go
+      - rust
+      - python

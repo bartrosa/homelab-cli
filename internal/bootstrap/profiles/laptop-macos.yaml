@@ -1,0 +1,14 @@
+name: laptop-macos
+description: Developer laptop on macOS (Homebrew + mise)
+steps:
+  - type: pkg
+    packages:
+      - ripgrep
+      - jq
+      - git
+  - type: toolchain
+    languages:
+      - go
+      - rust
+      - python
+      - node
