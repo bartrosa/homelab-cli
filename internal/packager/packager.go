@@ -76,5 +76,5 @@ func (m *Manager) IsInstalled(ctx context.Context, name string) (bool, error) {
 
 // ListTracked returns names the manager would use for common lab deps (informational).
 func (m *Manager) ListTracked() []string {
-	return []string{"ripgrep", "jq", "ffmpeg", "yt-dlp", "git", "podman"}
+	return []string{"ripgrep", "jq", "git", "podman"}
 }
