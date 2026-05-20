@@ -87,7 +87,6 @@ func Rsync(ctx context.Context, cfg *config.Config, homelabRoot string, dryRun b
 		"--exclude", ".git",
 		"--exclude", ".env",
 		"--exclude", ".venv",
-		"--exclude", "yt_playlist_downloads",
 		"--exclude", "*.log",
 		"-e", sshOpts,
 		local + "/",
