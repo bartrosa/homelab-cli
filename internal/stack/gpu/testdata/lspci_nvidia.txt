@@ -1,0 +1,2 @@
+00:02.0 VGA compatible controller [0300]: Intel Corporation UHD Graphics 630 [8086:3e9b] (rev 02)
+01:00.0 VGA compatible controller [0300]: NVIDIA Corporation GA102 [GeForce RTX 4090] [10de:2204] (rev a1)
