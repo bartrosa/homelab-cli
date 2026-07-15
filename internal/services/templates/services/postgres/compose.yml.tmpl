@@ -1,0 +1,23 @@
+services:
+  postgres:
+{{- if .BuildImage }}
+    build: .
+{{- else }}
+    image: postgres:16.4-alpine
+{{- end }}
+    container_name: homelab-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${USER}
+      POSTGRES_PASSWORD: ${PASSWORD}
+      POSTGRES_DB: ${DATABASE}
+    ports:
+      - "${PORT}:5432"
+    volumes:
+      - ${DATA_DIR}/data:/var/lib/postgresql/data
+    networks:
+      - homelab-net
+
+networks:
+  homelab-net:
+    external: true

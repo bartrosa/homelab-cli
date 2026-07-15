@@ -1,0 +1,16 @@
+services:
+  qdrant:
+    image: qdrant/qdrant:v1.12.5
+    container_name: homelab-qdrant
+    restart: unless-stopped
+    ports:
+      - "${PORT}:6333"
+      - "${GRPC_PORT}:6334"
+    volumes:
+      - ${DATA_DIR}/storage:/qdrant/storage
+    networks:
+      - homelab-net
+
+networks:
+  homelab-net:
+    external: true

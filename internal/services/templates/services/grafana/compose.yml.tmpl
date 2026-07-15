@@ -1,0 +1,18 @@
+services:
+  grafana:
+    image: grafana/grafana:11.3.1
+    container_name: homelab-grafana
+    restart: unless-stopped
+    environment:
+      GF_SECURITY_ADMIN_USER: ${USER}
+      GF_SECURITY_ADMIN_PASSWORD: ${PASSWORD}
+    ports:
+      - "${PORT}:3000"
+    volumes:
+      - ${DATA_DIR}/data:/var/lib/grafana
+    networks:
+      - homelab-net
+
+networks:
+  homelab-net:
+    external: true

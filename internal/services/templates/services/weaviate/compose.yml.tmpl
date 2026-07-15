@@ -1,0 +1,19 @@
+services:
+  weaviate:
+    image: semitechnologies/weaviate:1.27.0
+    container_name: homelab-weaviate
+    restart: unless-stopped
+    environment:
+      AUTHENTICATION_APIKEY_ENABLED: "true"
+      AUTHENTICATION_APIKEY_ALLOWED_KEYS: ${API_KEY}
+      AUTHENTICATION_APIKEY_USERS: homelab
+    ports:
+      - "${PORT}:8080"
+    volumes:
+      - ${DATA_DIR}/data:/var/lib/weaviate
+    networks:
+      - homelab-net
+
+networks:
+  homelab-net:
+    external: true

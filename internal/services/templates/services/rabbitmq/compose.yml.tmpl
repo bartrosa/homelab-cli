@@ -1,0 +1,19 @@
+services:
+  rabbitmq:
+    image: rabbitmq:3.13.7-management-alpine
+    container_name: homelab-rabbitmq
+    restart: unless-stopped
+    environment:
+      RABBITMQ_DEFAULT_USER: ${USER}
+      RABBITMQ_DEFAULT_PASS: ${PASSWORD}
+    ports:
+      - "${PORT}:5672"
+      - "${MGMT_PORT}:15672"
+    volumes:
+      - ${DATA_DIR}/data:/var/lib/rabbitmq
+    networks:
+      - homelab-net
+
+networks:
+  homelab-net:
+    external: true
