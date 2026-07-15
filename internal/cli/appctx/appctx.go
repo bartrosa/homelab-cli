@@ -12,11 +12,11 @@ type ctxKey struct{}
 
 // Session holds config and UI flags for a lab invocation.
 type Session struct {
-	Config     *config.Config
-	ConfigPath string
-	DryRun     bool
-	NoColor    bool
-	Styles     ui.Styles
+	Config      *config.Config
+	ConfigPath  string
+	DryRun      bool
+	NoColor     bool
+	Styles      ui.Styles
 	HomelabRoot string // flag override
 }
 
