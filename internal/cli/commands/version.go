@@ -1,11 +1,12 @@
 package commands
 
 import (
-	"github.com/bartrosa/homelab-cli/internal/buildinfo"
-	"github.com/bartrosa/homelab-cli/internal/logging"
 	"encoding/json"
 	"fmt"
 	"strings"
+
+	"github.com/bartrosa/homelab-cli/internal/buildinfo"
+	"github.com/bartrosa/homelab-cli/internal/logging"
 
 	"github.com/charmbracelet/lipgloss"
 	"github.com/spf13/cobra"

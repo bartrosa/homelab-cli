@@ -1,8 +1,9 @@
 package commands
 
 import (
-	"github.com/bartrosa/homelab-cli/internal/clierrors"
 	"fmt"
+
+	"github.com/bartrosa/homelab-cli/internal/clierrors"
 
 	"github.com/spf13/cobra"
 )
