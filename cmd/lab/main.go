@@ -2,11 +2,15 @@
 package main
 
 import (
-	"github.com/bartrosa/homelab-cli/internal/cli"
 	"context"
+	"errors"
 	"os"
 	"os/signal"
 	"syscall"
+
+	"github.com/bartrosa/homelab-cli/internal/cli"
+
+	"github.com/bartrosa/homelab-cli/internal/clierrors"
 )
 
 func main() {
@@ -16,6 +20,13 @@ func main() {
 	stop()
 
 	if err != nil {
+		var exitErr *clierrors.ExitError
+		if errors.As(err, &exitErr) {
+			if exitErr.Msg != "" {
+				cli.PrintCommandError(err)
+			}
+			os.Exit(exitErr.ExitCode())
+		}
 		cli.PrintCommandError(err)
 		os.Exit(1)
 	}
