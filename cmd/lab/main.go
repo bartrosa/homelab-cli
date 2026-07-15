@@ -11,6 +11,9 @@ import (
 	"github.com/bartrosa/homelab-cli/internal/cli"
 
 	"github.com/bartrosa/homelab-cli/internal/clierrors"
+
+	_ "github.com/bartrosa/homelab-cli/internal/services/register"
+	_ "github.com/bartrosa/homelab-cli/internal/stack/components"
 )
 
 func main() {

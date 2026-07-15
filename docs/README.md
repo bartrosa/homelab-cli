@@ -6,6 +6,7 @@ English reference for **homelab-cli** (`lab`).
 
 | Document | Contents |
 |----------|----------|
+| [provisioning.md](provisioning.md) | **v0.2.0** new-machine workflow (install → ISO → USB → essentials) |
 | [commands.md](commands.md) | Full command tree, status, examples |
 | [configuration.md](configuration.md) | Config file, env vars, precedence |
 | [config.example.yaml](config.example.yaml) | Copy-paste starter config |

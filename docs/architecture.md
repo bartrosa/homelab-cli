@@ -18,11 +18,27 @@
        │ RunE
        ▼
 ┌───────────────────────────────────────────────┐
-│ Domain packages (bootstrap, media, server, …) │
-│  → executil.Runner (dry-run, logging)         │
-│  → exec: ssh, wget, podman-compose, …       │
+│ Domain packages (bootstrap, iso, server, …)   │
+│  → exec.Runner / executil (dry-run, logging)  │
+│  → ssh, wget, podman-compose, dd, gpg, …     │
 └───────────────────────────────────────────────┘
 ```
+
+## Adapter model (target)
+
+Commands stay thin; reusable logic lives in `internal/*` adapters:
+
+| Adapter | Interface role | Implementations (current / planned) |
+|---------|------------------|-------------------------------------|
+| **Package managers** | Install/ensure/list OS packages | ✅ brew, apt, dnf, rpm-ostree (`internal/packager`, `internal/pkgmgr`) |
+| **Toolchain** | Language runtime install/switch | ✅ mise wrapper (`internal/toolchain`) |
+| **Services** | Compose stack lifecycle | ✅ podman-compose / docker (`internal/services`, `internal/mlstack`) |
+| **Repos** | Clone, backup, sync, status | ✅ GitLab backup (interim Python); 🚧 go-git + REST providers |
+| **Cluster** | k3s/k8s ops | 🚧 kubectl / client-go |
+| **Storage** | S3-compatible ops | 🚧 MinIO API client |
+| **Models / ML** | Local LLM pull/run | 🚧 ollama, vLLM wrappers |
+
+Stub commands (`commands.StubRunE`) reserve the CLI surface until each adapter ships — typically one adapter per PR.
 
 ## Implemented packages
 
@@ -39,8 +55,10 @@
 | `internal/repos` | GitLab backup | homelab Python script (interim) |
 | `internal/templates` | Project scaffolds | filesystem copy from homelab |
 | `internal/media` | HEIC convert | heif-convert |
-| `internal/system` | Bootable USB | HTTP to mirrors, wget, sha256sum, dd |
+| `internal/system` | Bootable USB (mirror discovery) | HTTP, wget, sha256sum, dd |
+| `internal/iso` | ISO catalog, download, verify, burn | gpg, wget/curl, dd, lsblk |
 | `internal/baremetal` | DB installers on Linux | curl, apt, sudo, systemd |
+| `internal/updater` | In-place binary upgrade | GitHub releases API |
 
 ## Cross-cutting
 
@@ -48,24 +66,25 @@
 |---------|------|
 | `internal/config` | YAML + `LAB_*` env |
 | `internal/homelabroot` | Resolve homelab repo path |
-| `internal/executil` | Command runner with dry-run |
-| `internal/ui` | lipgloss sections and tables |
+| `internal/exec`, `internal/executil` | Testable command runner with dry-run |
+| `internal/ui` | lipgloss sections, tables, progress |
 | `internal/platform` | OS detection (brew vs apt vs …) |
 | `internal/logging` | slog on context |
 | `internal/buildinfo` | Version ldflags |
+| `internal/clierrors` | Shared errors (`ErrNotImplemented`, …) |
 
 ## Command groups (Cobra)
 
 | Group ID | Commands |
 |----------|----------|
-| `foundation` | bootstrap, pkg, toolchain, services |
+| `foundation` | bootstrap, pkg, toolchain, services, **iso** |
 | `repos` | repos |
 | `infra` | server, postgres, baremetal, system, ssh, cluster, gpu, containers, net, storage |
 | `data` | models, data, notebooks, mlops, vector, pipelines, agents |
 | `workflow` | obs, logs, templates, media, mcp |
-| `meta` | version |
+| `meta` | version, **self-update** |
 
-Stub commands return a consistent “not implemented yet” error via `commands.StubRunE`.
+Run `lab --help` to see groups in the root help output.
 
 ## Homelab repo boundary
 
@@ -82,15 +101,16 @@ Orchestration and new features belong in Go here. See [`homelab-migration.md`](h
 
 | Area | Direction |
 |------|-----------|
-| Repos | Go GitLab API + go-git instead of Python backup |
+| Repos | Go GitLab/GitHub API + go-git instead of Python backup |
 | Bootstrap | Replace `script:` steps with native Go where practical |
-| Cluster / ML | Thin adapters over kubectl, ollama, etc. |
-| MCP | `lab mcp serve` exposing guarded read-only tools |
+| Cluster / GPU / net | Thin adapters over kubectl, nvidia-smi, tailscale CLI |
+| Models / ML | ollama/vLLM pull, MLflow status |
+| MCP | `lab mcp serve` as stdio server exposing a guarded subset of read-only tools for Cursor/Copilot |
 
 ## Layout conventions
 
-- `cmd/lab` — `main` only
-- `internal/cli` — root command wiring
-- `internal/cli/commands` — per-domain command constructors
-- `internal/cli/appctx` — `Session` on `context.Context`
-- `pkg/` — reserved for future public libraries
+- `cmd/lab` — `main` only (signal-aware context, exit code 1 on error)
+- `internal/cli` — root command wiring, config/logger bootstrap
+- `internal/cli/commands` — one file per domain; `NewXxxCmd()` constructors
+- `internal/cli/appctx` — `Session` (config, dry-run, styles) on `context.Context`
+- `pkg/` — reserved for future public libraries (e.g. shared repo provider interfaces)

@@ -75,12 +75,27 @@ Embedded profiles live in `internal/bootstrap/profiles/*.yaml` and are always av
 | `repos.backup_dir` | GitLab backup destination |
 | `repos.providers[]` | `name`, `kind` (`github`, `gitlab`, …), `host`, `token_env` |
 
+### `stack`
+
+| Key | Description |
+|-----|-------------|
+| `stack.default_preset` | Default preset for `lab stack install` |
+| `stack.presets` | Custom preset → component list (merges with built-ins) |
+| `stack.components.<id>.version` | Pin component version |
+| `stack.components.<id>.enabled` | Enable/disable component in presets |
+
 ### `services`
 
 | Key | Description |
 |-----|-------------|
-| `services.runtime` | `podman-compose` or `docker` |
-| `services.stacks_dir` | Reserved; stacks are resolved from `homelab.root` today |
+| `services.runtime` | `auto` (default), `docker`, or `podman` |
+| `services.network` | Shared compose network (default `homelab-net`) |
+| `services.instances.<id>.<field>` | Per-service config defaults |
+| `services.presets` | Custom service preset bundles |
+
+Service config files live under `~/.config/homelab-cli/services/<id>/` (compose, `.env`, init scripts). Data under `~/.local/share/homelab/services/<id>/`.
+
+Secret references: `password: env:LAB_POSTGRES_PASSWORD` resolves at runtime (use with `op run -- lab services up …`).
 
 ### `cluster` / `storage`
 
@@ -122,7 +137,27 @@ repos:
       token_env: GITLAB_TOKEN
 
 services:
-  runtime: podman-compose
+  runtime: auto
+  network: homelab-net
+  instances:
+    postgres:
+      port: 5432
+      plugins: [pgvector, postgis]
+      expose: local
+      password: env:LAB_POSTGRES_PASSWORD
+    grafana:
+      port: 3000
+      datasources: [prometheus, loki]
+  presets:
+    my-ml-lab: [postgres, qdrant, minio, clickhouse]
+
+stack:
+  default_preset: backend
+  presets:
+    my-workflow: [python, node, go, docker]
+  components:
+    python: { version: "3.12" }
+    cuda: { version: "12-6" }
 
 ssh:
   hosts:
