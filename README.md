@@ -18,7 +18,7 @@ Module: `github.com/bartrosa/homelab-cli`
 
 | Area | Commands | Notes |
 |------|----------|--------|
-| **Bootstrap** | `bootstrap laptop\|server\|profile\|list` | Embedded YAML profiles (macOS, Linux, Silverblue, Ubuntu server) |
+| **Bootstrap** | `bootstrap laptop\|server\|profile\|list\|essentials` | Profiles + `essentials` for Ubuntu/Silverblue |
 | **Packages** | `pkg install\|ensure\|list` | brew, apt, dnf, rpm-ostree |
 | **Toolchains** | `toolchain install\|list\|use` | via [mise](https://mise.jdx.dev/) |
 | **Services** | `services up\|down\|list\|logs\|ensure` | homelab `ml-stack` compose |
@@ -26,11 +26,12 @@ Module: `github.com/bartrosa/homelab-cli`
 | **PostgreSQL** | `postgres apply` | Idempotent apply from `instances.yaml` (pgx) |
 | **Bare metal** | `baremetal install` | Qdrant, Milvus, ClickHouse on Linux |
 | **System** | `system usb list`, `system usb` | Bootable USB; ISOs discovered from Ubuntu/Fedora mirrors |
+| **ISO** | `iso list`, `iso download`, `iso disks`, `iso write` | Cache ISOs, list disks, burn USB (Linux) |
 | **SSH** | `ssh connect`, `ssh sync` | Host inventory from config |
 | **Repos** | `repos backup` | GitLab account mirror (homelab Python script today) |
 | **Templates** | `templates list\|new` | Copy `project-initiators/` from homelab |
 | **Media** | `media heic` | HEIC→JPEG via `heif-convert` |
-| **Meta** | `version` | Build metadata |
+| **Meta** | `version`, `self-update` | Build metadata and in-place upgrades |
 
 **Planned (stubs):** `cluster`, `gpu`, `models`, `mlops`, `vector`, `pipelines`, `agents`, `obs`, `logs`, `mcp`, most of `repos` beyond backup.
 
@@ -38,7 +39,29 @@ Full command tables: [`docs/commands.md`](docs/commands.md).
 
 ## Installation
 
-### Build from source
+### One-liner install
+
+```bash
+curl -sSL https://raw.githubusercontent.com/bartrosa/homelab-cli/main/scripts/install.sh | bash
+```
+
+Pin a version or install to `$HOME/.local`:
+
+```bash
+curl -sSL https://raw.githubusercontent.com/bartrosa/homelab-cli/main/scripts/install.sh | bash -s -- --version v0.2.0
+curl -sSL https://raw.githubusercontent.com/bartrosa/homelab-cli/main/scripts/install.sh | bash -s -- --prefix "$HOME/.local"
+```
+
+### Upgrading
+
+```bash
+lab self-update
+lab self-update --check   # exit 0 if current, 3 if update available
+```
+
+### Alternatives
+
+**Build from source**
 
 ```bash
 git clone https://github.com/bartrosa/homelab-cli.git
@@ -48,15 +71,28 @@ make install    # or: make build && ./bin/lab
 
 Requires **Go 1.25+**.
 
-### `go install`
+**go install**
 
 ```bash
 go install github.com/bartrosa/homelab-cli/cmd/lab@latest
 ```
 
-### Releases
+**Release packages**
 
-Tagged releases publish binaries via GoReleaser. You can also use `scripts/install.sh` when release artifacts are available.
+Tagged releases publish `.tar.gz`, `.deb`, and `.rpm` via GoReleaser on the [Releases](https://github.com/bartrosa/homelab-cli/releases) page.
+
+## Provisioning a new machine
+
+```bash
+# On an existing Linux host:
+lab iso list
+lab iso download ubuntu-desktop
+lab iso disks
+lab iso write ~/.cache/homelab-cli/iso/ubuntu-24.04.3-desktop-amd64.iso --to /dev/sdb
+
+# After booting the fresh OS and installing lab:
+lab bootstrap essentials
+```
 
 ## Quick start
 

@@ -5,6 +5,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.0] - YYYY-MM-DD
+
+### Added
+
+- Release plumbing: GoReleaser `.deb`, `.rpm`, `.tar.gz`, and `checksums.txt` for linux/darwin amd64/arm64.
+- `scripts/install.sh` and `scripts/uninstall.sh` for curl-based installs with SHA256 verification.
+- `lab self-update` with `--check`, `--version`, `--pre-release`, and `--yes`.
+- `lab iso list|download|disks|write` — ISO catalog, verified downloads, USB disk listing, and safe `dd` writes (Linux).
+- `lab bootstrap essentials` for Ubuntu and Fedora Silverblue with idempotent sections.
+- Package manager adapters: `internal/pkgmgr` (`apt`, `rpm-ostree`, detect).
+- Testable exec runner: `internal/exec`.
+
+### Changed
+
+- GoReleaser config: nfpms, changelog filters, release mode.
+- GitHub release workflow unchanged in trigger but documents full artifact set.
+
 ## [Unreleased]
 
 ### Added
