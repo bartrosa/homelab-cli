@@ -51,6 +51,11 @@ func (o *Orchestrator) Up(ctx context.Context, opts InitOptions, names ...string
 		if err := s.Up(ctx, opts); err != nil {
 			return fmt.Errorf("%s: up: %w", id, err)
 		}
+		if pu, ok := s.(PostUpper); ok {
+			if err := pu.PostUp(ctx, opts); err != nil {
+				fmt.Fprintf(opts.Stderr, "warning: %s post-up: %v\n", id, err)
+			}
+		}
 	}
 	return nil
 }

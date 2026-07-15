@@ -20,6 +20,7 @@ const (
 	CategoryVector        Category = "vector"
 	CategoryObservability Category = "observability"
 	CategoryStorage       Category = "storage"
+	CategoryGraph         Category = "graph"
 )
 
 // Service is a provisionable compose-backed homelab service.
@@ -53,7 +54,13 @@ type InitOptions struct {
 type Status struct {
 	ID      string
 	Running bool
+	Healthy bool
 	Detail  string
+}
+
+// PostUpper is implemented by services that need work after compose up.
+type PostUpper interface {
+	PostUp(ctx context.Context, opts InitOptions) error
 }
 
 // ServiceMeta holds static metadata for a managed compose service.

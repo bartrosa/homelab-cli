@@ -10,6 +10,8 @@ var DefaultPresets = map[string][]string{
 	"microservices":  {"postgres", "redis", "rabbitmq"},
 	"vector-search":  {"qdrant", "weaviate"},
 	"full-obs":       {"prometheus", "grafana", "loki", "tempo", "minio"},
+	"graphrag":       {"arcadedb", "qdrant", "minio", "postgres"},
+	"graph-lab":      {"arcadedb", "nebulagraph"},
 }
 
 // PresetNames returns sorted preset keys.
