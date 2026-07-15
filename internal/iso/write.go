@@ -7,9 +7,9 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"strings"
 
 	"github.com/bartrosa/homelab-cli/internal/exec"
+	"github.com/bartrosa/homelab-cli/internal/ui"
 )
 
 // WriteOptions configures ISO write to block device.
@@ -18,6 +18,7 @@ type WriteOptions struct {
 	Device    string
 	Yes       bool
 	Force     bool
+	NoColor   bool
 	BlockSize string
 	Stdout    io.Writer
 	Stderr    io.Writer
@@ -37,9 +38,9 @@ func WriteISO(ctx context.Context, opts WriteOptions) error {
 		opts.BlockSize = "4M"
 	}
 
-	device := opts.Device
-	if !strings.HasPrefix(device, "/dev/") {
-		device = "/dev/" + strings.TrimPrefix(device, "/dev/")
+	device := BlockDevicePath(opts.Device)
+	if device == "" {
+		return fmt.Errorf("device is required")
 	}
 
 	st, err := os.Stat(device)
@@ -63,21 +64,33 @@ func WriteISO(ctx context.Context, opts WriteOptions) error {
 	if !opts.Force && diskType == DiskSystem {
 		return fmt.Errorf("refusing to write to system disk %s (TRAN=%s RM=%v); use --force to override", device, info.Tran, info.RM)
 	}
-	if len(info.Mountpoints) > 0 && !opts.Force {
-		return fmt.Errorf("device %s has mounted partitions: %v; unmount first or use --force", device, info.Mountpoints)
+	if len(info.Mountpoints) > 0 {
+		fmt.Fprintf(opts.Stdout, "Unmounting partitions on %s: %v\n", device, info.Mountpoints)
+		if err := unmountDevice(ctx, opts.Runner, device); err != nil {
+			return err
+		}
+		info, err = InspectDevice(ctx, opts.Runner, device)
+		if err != nil {
+			return err
+		}
+		if len(info.Mountpoints) > 0 && !opts.Force {
+			return fmt.Errorf("device %s still has mounted partitions: %v; unmount manually or use --force", device, info.Mountpoints)
+		}
 	}
 
-	isoSize, err := ReadISOSize(opts.ISOPath)
+	isoStat, err := os.Stat(opts.ISOPath)
 	if err != nil {
-		return err
+		return fmt.Errorf("iso file: %w", err)
 	}
+	isoSize := formatBytes(isoStat.Size())
 
 	fmt.Fprintf(opts.Stdout, "About to write to:\n")
 	fmt.Fprintf(opts.Stdout, "  Device:  %s\n", device)
 	fmt.Fprintf(opts.Stdout, "  Model:   %s\n", info.Model)
 	fmt.Fprintf(opts.Stdout, "  Size:    %s\n", info.Size)
 	fmt.Fprintf(opts.Stdout, "  Source:  %s (%s)\n\n", opts.ISOPath, isoSize)
-	fmt.Fprintf(opts.Stdout, "⚠️  ALL DATA ON %s WILL BE DESTROYED.\n\n", device)
+	ui.WarnLine(opts.Stdout, opts.NoColor, fmt.Sprintf("ALL DATA ON %s WILL BE DESTROYED", device))
+	fmt.Fprintln(opts.Stdout)
 
 	if !opts.Yes {
 		prompt := fmt.Sprintf("Type %q to confirm: ", device)
@@ -96,8 +109,8 @@ func WriteISO(ctx context.Context, opts WriteOptions) error {
 		}
 	}
 
-	if err := unmountDevice(ctx, opts.Runner, device); err != nil {
-		return err
+	if os.Geteuid() != 0 {
+		fmt.Fprintln(opts.Stdout, "Elevating with sudo for disk write (password may be required)...")
 	}
 
 	args := []string{
@@ -108,13 +121,13 @@ func WriteISO(ctx context.Context, opts WriteOptions) error {
 		"conv=fdatasync",
 		"oflag=direct",
 	}
-	if err := opts.Runner.Run(ctx, "dd", args...); err != nil {
-		return fmt.Errorf("dd: %w", err)
+	if err := runDDWithProgress(ctx, opts.Stdout, opts.NoColor, isoStat.Size(), device, args); err != nil {
+		return err
 	}
-	if err := opts.Runner.Run(ctx, "sync"); err != nil {
+	if err := runPrivileged(ctx, opts.Runner, "sync"); err != nil {
 		return err
 	}
 
-	fmt.Fprintln(opts.Stdout, "Done. You can now unplug the USB drive and boot from it.")
+	ui.OKLine(opts.Stdout, opts.NoColor, "Done — unplug the USB drive and boot from it")
 	return nil
 }

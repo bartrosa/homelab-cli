@@ -45,11 +45,14 @@ Full command tables: [`docs/commands.md`](docs/commands.md).
 curl -sSL https://raw.githubusercontent.com/bartrosa/homelab-cli/main/scripts/install.sh | bash
 ```
 
-Pin a version or install to `$HOME/.local`:
+The install script downloads the release tarball, verifies SHA256 checksums, and installs `lab`. If `~/.local/bin` is used (when `/usr/local/bin` is not writable), it **automatically appends** the install directory to your shell rc (`~/.bashrc`, `~/.zshrc`, or `~/.profile`). Open a new terminal or run `source ~/.bashrc` afterward.
+
+Pin a version or install to a custom prefix:
 
 ```bash
-curl -sSL https://raw.githubusercontent.com/bartrosa/homelab-cli/main/scripts/install.sh | bash -s -- --version v0.2.0
+curl -sSL https://raw.githubusercontent.com/bartrosa/homelab-cli/main/scripts/install.sh | bash -s -- --version v0.1.0
 curl -sSL https://raw.githubusercontent.com/bartrosa/homelab-cli/main/scripts/install.sh | bash -s -- --prefix "$HOME/.local"
+curl -sSL .../install.sh | bash -s -- --no-path   # skip automatic PATH setup
 ```
 
 ### Upgrading

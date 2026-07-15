@@ -17,6 +17,7 @@ type WriteOptions struct {
 	Device    string
 	Yes       bool
 	Force     bool
+	NoColor   bool
 	BlockSize string
 	Stdout    io.Writer
 	Stderr    io.Writer

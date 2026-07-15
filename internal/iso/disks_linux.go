@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"strings"
 
 	"github.com/bartrosa/homelab-cli/internal/exec"
 )
@@ -18,7 +17,7 @@ func ListDisks(ctx context.Context, runner exec.Runner) ([]Disk, error) {
 	if runner == nil {
 		runner = exec.NewOSRunner(os.Stdout, os.Stderr)
 	}
-	out, err := runner.RunWithOutput(ctx, "lsblk", "-J", "-o", "NAME,SIZE,MODEL,TRAN,RM,MOUNTPOINT,VENDOR")
+	out, err := runner.RunWithOutput(ctx, "lsblk", "-d", "-J", "-o", "NAME,SIZE,MODEL,TRAN,RM,TYPE,VENDOR")
 	if err != nil {
 		return nil, err
 	}
@@ -31,15 +30,15 @@ func WriteDisksTable(w io.Writer, disks []Disk) {
 	for _, d := range disks {
 		fmt.Fprintln(w, FormatDiskLine(d))
 		if d.Type == DiskSystem {
-			fmt.Fprintf(w, "  ⚠️  SYSTEM disk — do NOT write ISOs to %s\n", d.Device)
+			fmt.Fprintf(w, "  ! SYSTEM disk — do NOT write ISOs to %s\n", d.Device)
 		}
 	}
 }
 
 // InspectDevice reads lsblk metadata for a single device.
 func InspectDevice(ctx context.Context, runner exec.Runner, device string) (DeviceInfo, error) {
-	name := strings.TrimPrefix(device, "/dev/")
-	out, err := runner.RunWithOutput(ctx, "lsblk", "-J", "-n", "-o", "NAME,SIZE,MODEL,TRAN,RM,MOUNTPOINT", name)
+	device = BlockDevicePath(device)
+	out, err := runner.RunWithOutput(ctx, "lsblk", "-J", "-o", "NAME,SIZE,MODEL,TRAN,RM,TYPE,MOUNTPOINT", device)
 	if err != nil {
 		return DeviceInfo{}, err
 	}
@@ -56,8 +55,8 @@ func InspectDevice(ctx context.Context, runner exec.Runner, device string) (Devi
 	return DeviceInfo{
 		Device:      device,
 		Size:        dev.Size,
-		Model:       dev.Model,
-		Tran:        dev.Tran,
+		Model:       strVal(dev.Model),
+		Tran:        strVal(dev.Tran),
 		RM:          dev.RM,
 		Mountpoints: mps,
 	}, nil
@@ -74,8 +73,8 @@ type DeviceInfo struct {
 }
 
 func unmountDevice(ctx context.Context, runner exec.Runner, device string) error {
-	name := strings.TrimPrefix(device, "/dev/")
-	out, err := runner.RunWithOutput(ctx, "lsblk", "-J", "-n", "-o", "NAME,MOUNTPOINT", name)
+	device = BlockDevicePath(device)
+	out, err := runner.RunWithOutput(ctx, "lsblk", "-J", "-o", "NAME,MOUNTPOINT", device)
 	if err != nil {
 		return err
 	}
@@ -83,15 +82,20 @@ func unmountDevice(ctx context.Context, runner exec.Runner, device string) error
 	if err := json.Unmarshal([]byte(out), &payload); err != nil {
 		return err
 	}
-	var parts []string
+	var targets []string
 	for _, d := range payload.BlockDevices {
-		collectPartNames(d, &parts)
+		collectUmountTargets(d, &targets)
 	}
-	for _, p := range parts {
-		if p == "" {
+	seen := make(map[string]struct{})
+	for _, t := range targets {
+		if t == "" {
 			continue
 		}
-		_ = runner.Run(ctx, "umount", "/dev/"+p)
+		if _, ok := seen[t]; ok {
+			continue
+		}
+		seen[t] = struct{}{}
+		tryUmount(ctx, runner, t)
 	}
 	return nil
 }

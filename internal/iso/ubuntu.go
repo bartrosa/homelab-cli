@@ -38,10 +38,14 @@ func resolveUbuntuDesktop(arch, version string) (Release, error) {
 	base := ubuntuBase + ver + "/"
 	isoFile := fmt.Sprintf("ubuntu-%s-desktop-%s.iso", ver, arch)
 	return Release{
-		Version:     ver + " LTS",
-		ISOURL:      base + isoFile,
-		ChecksumURL: base + "SHA256SUMS",
-		GPGKeyURL:   base + "SHA256SUMS.gpg",
+		Version:        ver + " LTS",
+		ISOURL:         base + isoFile,
+		ChecksumURL:    base + "SHA256SUMS",
+		ChecksumSigURL: base + "SHA256SUMS.gpg",
+		SigningKeyIDs: []string{
+			"843938DF228D22F7B3742BC0D94AA3F0EFE21092", // Ubuntu CD Image Automatic Signing Key (2012)
+			"46181433FBB75451",                         // Ubuntu CD Image Signing Key (legacy)
+		},
 		ISOFilename: isoFile,
 	}, nil
 }

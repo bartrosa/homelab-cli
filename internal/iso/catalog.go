@@ -13,13 +13,26 @@ import (
 // ErrNotImplemented indicates a stub resolver.
 var ErrNotImplemented = errors.New("not implemented yet")
 
+// ChecksumSigKind describes how checksum signatures are published.
+type ChecksumSigKind int
+
+const (
+	// SigDetached — separate signature file (e.g. Ubuntu SHA256SUMS.gpg).
+	SigDetached ChecksumSigKind = iota
+	// SigClearsigned — signature embedded in the checksum file (e.g. Fedora CHECKSUM).
+	SigClearsigned
+)
+
 // Release describes a resolved ISO download.
 type Release struct {
-	Version     string
-	ISOURL      string
-	ChecksumURL string
-	GPGKeyURL   string
-	ISOFilename string
+	Version         string
+	ISOURL          string
+	ChecksumURL     string
+	ChecksumSigURL  string // detached signature URL (SigDetached only)
+	ChecksumSigKind ChecksumSigKind
+	SigningKeyIDs   []string // hex key IDs, fetched from upstream keyservers
+	SigningKeyURLs  []string // direct .gpg keyring URLs (e.g. fedoraproject.org/fedora.gpg)
+	ISOFilename     string
 }
 
 // Distro describes a supported distribution.
@@ -184,12 +197,5 @@ func ClassifyDisk(rm bool, tran string) DiskType {
 
 // FormatDiskLine returns a display line for a disk.
 func FormatDiskLine(d Disk) string {
-	tag := string(d.Type)
-	switch d.Type {
-	case DiskUSB:
-		tag += " ✅"
-	case DiskSystem:
-		tag += " ⚠️"
-	}
-	return fmt.Sprintf("%-12s %-8s %-24s %-6s %s", d.Device, d.Size, d.Model, d.Tran, tag)
+	return fmt.Sprintf("%-12s %-8s %-24s %-6s %s", d.Device, d.Size, d.Model, d.Tran, d.Type)
 }

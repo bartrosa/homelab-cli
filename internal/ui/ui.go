@@ -4,7 +4,6 @@ package ui
 import (
 	"fmt"
 	"io"
-	"os"
 	"strings"
 
 	"github.com/charmbracelet/lipgloss"
@@ -23,27 +22,25 @@ type Styles struct {
 }
 
 // NewStyles builds the palette; disable color when noColor or not a TTY.
-func NewStyles(w io.Writer, noColor bool) Styles {
-	useColor := !noColor
-	if f, ok := w.(*os.File); ok && !lipgloss.HasDarkBackground() {
-		_ = f
-	}
-	if !useColor {
+func NewStyles(_ io.Writer, noColor bool) Styles {
+	if noColor {
 		plain := lipgloss.NewStyle()
+		bold := lipgloss.NewStyle().Bold(true)
 		return Styles{
-			Title: plain, Subtitle: plain, OK: plain, Warn: plain,
-			Err: plain, Dim: plain, Accent: plain, Border: plain,
+			Title: bold, Subtitle: plain, OK: bold, Warn: bold,
+			Err: bold, Dim: plain, Accent: bold, Border: plain,
 		}
 	}
+	dim := lipgloss.NewStyle().Foreground(lipgloss.AdaptiveColor{Light: "245", Dark: "241"})
 	return Styles{
-		Title:    lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("205")),
-		Subtitle: lipgloss.NewStyle().Foreground(lipgloss.Color("245")),
-		OK:       lipgloss.NewStyle().Foreground(lipgloss.Color("42")),
-		Warn:     lipgloss.NewStyle().Foreground(lipgloss.Color("214")),
-		Err:      lipgloss.NewStyle().Foreground(lipgloss.Color("196")),
-		Dim:      lipgloss.NewStyle().Foreground(lipgloss.Color("240")),
-		Accent:   lipgloss.NewStyle().Foreground(lipgloss.Color("39")),
-		Border:   lipgloss.NewStyle().Border(lipgloss.RoundedBorder()).BorderForeground(lipgloss.Color("240")).Padding(0, 1),
+		Title:    lipgloss.NewStyle().Bold(true).Underline(true).Foreground(lipgloss.AdaptiveColor{Light: "236", Dark: "255"}),
+		Subtitle: dim,
+		OK:       lipgloss.NewStyle().Bold(true).Foreground(lipgloss.AdaptiveColor{Light: "28", Dark: "42"}),
+		Warn:     lipgloss.NewStyle().Bold(true).Foreground(lipgloss.AdaptiveColor{Light: "172", Dark: "214"}),
+		Err:      lipgloss.NewStyle().Bold(true).Foreground(lipgloss.AdaptiveColor{Light: "124", Dark: "196"}),
+		Dim:      dim,
+		Accent:   lipgloss.NewStyle().Bold(true).Foreground(lipgloss.AdaptiveColor{Light: "25", Dark: "39"}),
+		Border:   lipgloss.NewStyle().Border(lipgloss.RoundedBorder()).BorderForeground(lipgloss.AdaptiveColor{Light: "250", Dark: "238"}).Padding(0, 1),
 	}
 }
 
@@ -85,12 +82,15 @@ func Table(w io.Writer, s Styles, headers []string, rows [][]string) {
 	}
 	colW := make([]int, len(headers))
 	for i, h := range headers {
-		colW[i] = len(h)
+		colW[i] = lipgloss.Width(h)
 	}
 	for _, row := range rows {
 		for i, cell := range row {
-			if i < len(colW) && len(cell) > colW[i] {
-				colW[i] = len(cell)
+			if i < len(colW) {
+				w := lipgloss.Width(cell)
+				if w > colW[i] {
+					colW[i] = w
+				}
 			}
 		}
 	}
@@ -102,22 +102,70 @@ func Table(w io.Writer, s Styles, headers []string, rows [][]string) {
 			}
 			if i < len(colW) {
 				b.WriteString(c)
-				b.WriteString(strings.Repeat(" ", colW[i]-len(c)))
+				b.WriteString(strings.Repeat(" ", colW[i]-lipgloss.Width(c)))
 			} else {
 				b.WriteString(c)
 			}
 		}
 		return b.String()
 	}
-	_, _ = fmt.Fprintln(w, s.Dim.Render(pad(headers)))
+	_, _ = fmt.Fprintln(w, s.Title.Render(pad(headers)))
 	for _, row := range rows {
 		_, _ = fmt.Fprintln(w, pad(row))
 	}
 }
 
-// Box wraps content in a rounded border.
-func Box(s Styles, content string) string {
-	return s.Border.Render(content)
+// KeyValue prints aligned label: value lines (e.g. version info).
+func KeyValue(w io.Writer, s Styles, title string, pairs [][2]string) {
+	if title != "" {
+		_, _ = fmt.Fprintln(w, s.Title.Render(title))
+	}
+	maxKey := 0
+	for _, p := range pairs {
+		if len(p[0]) > maxKey {
+			maxKey = len(p[0])
+		}
+	}
+	for _, p := range pairs {
+		label := fmt.Sprintf("%-*s", maxKey, p[0]+":")
+		_, _ = fmt.Fprintf(w, "  %s %s\n", s.Dim.Render(label), p[1])
+	}
+}
+
+// SecurityWarning prints a high-visibility security banner (e.g. failed GPG verify).
+func SecurityWarning(w io.Writer, s Styles, noColor bool, title string, lines ...string) {
+	banner := s.Warn
+	if !noColor {
+		banner = lipgloss.NewStyle().
+			Bold(true).
+			Foreground(lipgloss.AdaptiveColor{Light: "178", Dark: "220"}).
+			Background(lipgloss.AdaptiveColor{Light: "228", Dark: "236"})
+	}
+
+	sep := strings.Repeat("=", 72)
+	_, _ = fmt.Fprintln(w)
+	_, _ = fmt.Fprintln(w, banner.Render(sep))
+	_, _ = fmt.Fprintln(w, banner.Render("!!!  "+strings.ToUpper(title)+"  !!!"))
+	_, _ = fmt.Fprintln(w, banner.Render(sep))
+	for _, line := range lines {
+		line = strings.TrimSpace(line)
+		if line == "" {
+			continue
+		}
+		_, _ = fmt.Fprintln(w, banner.Render("  "+line))
+	}
+	_, _ = fmt.Fprintln(w, banner.Render(sep))
+	_, _ = fmt.Fprintln(w)
+}
+
+// WarnLine prints a single warning using standard styles.
+func WarnLine(w io.Writer, noColor bool, msg string) {
+	Warn(w, NewStyles(w, noColor), msg)
+}
+
+// OKLine prints a single success line using standard styles.
+func OKLine(w io.Writer, noColor bool, msg string) {
+	OK(w, NewStyles(w, noColor), msg)
 }
 
 // NoColorFromCmd reads --no-color from cobra root when available.
