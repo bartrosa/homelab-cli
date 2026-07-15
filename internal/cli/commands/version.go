@@ -2,13 +2,12 @@ package commands
 
 import (
 	"encoding/json"
-	"fmt"
 	"strings"
 
 	"github.com/bartrosa/homelab-cli/internal/buildinfo"
 	"github.com/bartrosa/homelab-cli/internal/logging"
+	"github.com/bartrosa/homelab-cli/internal/ui"
 
-	"github.com/charmbracelet/lipgloss"
 	"github.com/spf13/cobra"
 )
 
@@ -43,35 +42,12 @@ func NewVersionCmd() *cobra.Command {
 }
 
 func printVersionText(cmd *cobra.Command, info buildinfo.Info) error {
-	out := cmd.OutOrStdout()
-
-	noColor, err := cmd.Root().PersistentFlags().GetBool("no-color")
-	if err != nil {
-		noColor = false
-	}
-
-	title := "lab"
-	if !noColor {
-		title = lipgloss.NewStyle().Bold(true).Render("lab")
-	}
-
-	_, werr := fmt.Fprintf(out, "%s version\n", title)
-	if werr != nil {
-		return werr
-	}
-
-	lines := []string{
-		fmt.Sprintf("Version:   %s", info.Version),
-		fmt.Sprintf("Commit:    %s", info.Commit),
-		fmt.Sprintf("Date:      %s", info.Date),
-		fmt.Sprintf("GoVersion: %s", info.GoVersion),
-	}
-
-	for _, line := range lines {
-		if _, err := fmt.Fprintln(out, line); err != nil {
-			return err
-		}
-	}
-
+	s := session(cmd)
+	ui.KeyValue(stdout(cmd), s.Styles, "lab", [][2]string{
+		{"Version", info.Version},
+		{"Commit", info.Commit},
+		{"Date", info.Date},
+		{"GoVersion", info.GoVersion},
+	})
 	return nil
 }
