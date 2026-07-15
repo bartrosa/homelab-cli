@@ -19,7 +19,7 @@ func TestLoad_defaultsWhenFileMissing(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, "info", cfg.LogLevel)
 	require.Equal(t, "text", cfg.LogFormat)
-	require.Equal(t, "podman", cfg.Services.Runtime)
+	require.Equal(t, "auto", cfg.Services.Runtime)
 }
 
 func TestLoad_envOverridesDefaults(t *testing.T) {
