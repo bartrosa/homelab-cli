@@ -154,6 +154,14 @@ lab services connect postgres --interactive # psql session
 lab services up --preset observability --yes  # prometheus, loki, tempo, grafana
 lab services up --preset ml-stack --yes       # postgres, qdrant, minio, clickhouse
 
+# Graph databases + GraphRAG stack
+lab services init arcadedb --set databases=knowledge_graph --yes
+lab services up arcadedb
+lab services connect arcadedb
+lab services up --preset graphrag --yes       # arcadedb + qdrant + minio + postgres
+lab services up --preset graph-lab --yes      # arcadedb + nebulagraph side by side
+lab vector up arcadedb                        # graph DB with built-in vector search
+
 lab obs up                                    # wrapper → observability preset
 lab vector up qdrant
 lab data up postgres

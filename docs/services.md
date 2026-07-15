@@ -24,8 +24,67 @@ Data: `~/.local/share/homelab/services/<id>/data/`
 | `microservices` | postgres, redis, rabbitmq |
 | `vector-search` | qdrant, weaviate |
 | `full-obs` | prometheus, grafana, loki, tempo, minio |
+| `graphrag` | arcadedb, qdrant, minio, postgres |
+| `graph-lab` | arcadedb, nebulagraph |
 
 Override or extend via `services.presets` in config YAML.
+
+## Graph databases
+
+### arcadedb
+
+Apache 2.0 multi-model database (graph, document, KV, vector, time-series). Single container with Studio UI, Cypher/GSQL/Gremlin/SQL, optional MongoDB/Redis protocol plugins, optional MCP plugin (gated until verified in upstream image).
+
+```bash
+lab services init arcadedb --set databases=knowledge_graph,rag_docs --yes
+lab services up arcadedb
+lab services connect arcadedb
+lab services connect arcadedb --interactive   # bin/console.sh
+```
+
+Endpoints: Studio `http://127.0.0.1:2480`, binary `:2424`, HTTP API `/api/v1`.
+
+### nebulagraph
+
+Apache 2.0 distributed graph (CNCF Database Landscape). Four-container MVP stack: `metad0`, `storaged0`, `graphd`, `studio`. openCypher-compatible nGQL. Post-init script auto-registers storage and rotates root password from default `nebula`.
+
+```bash
+lab services init nebulagraph --yes
+lab services up nebulagraph    # runs post-init after healthy
+lab services connect nebulagraph --interactive
+```
+
+Endpoints: nGQL `:9669`, Studio `http://127.0.0.1:7001`.
+
+`graph-lab` preset runs both graph databases in parallel (no port collision: ArcadeDB 2480/2424, NebulaGraph 9669/7001). Expect higher resource use (NebulaGraph = 4 containers + JVM for ArcadeDB).
+
+### Graph database licensing decisions
+
+| Candidate | License | Verdict |
+|-----------|---------|---------|
+| **ArcadeDB** | Apache 2.0 (explicit “forever” commitment) | ✅ Included |
+| **NebulaGraph** | Apache 2.0 (CNCF Database Landscape) | ✅ Included |
+| Neo4j Community | GPLv3 + proprietary Enterprise | ❌ Copyleft + enterprise lock |
+| FalkorDB | SSPL v1 (not OSI-approved) | ❌ SaaS-clause risk |
+| Memgraph | BSL 1.1 (not OSI-approved) | ❌ Commercial restrictions |
+| ArangoDB | BSL 1.1 since 2024 | ❌ License change |
+| JanusGraph | Apache 2.0 | ⏭ Deferred — requires Cassandra/HBase |
+| HugeGraph | Apache 2.0 (ASF) | ⏭ Deferred — no Cypher, multi-component |
+| Kuzu | MIT (archived Oct 2025, Apple acquisition) | ⏭ Docs only — see embedded alternatives |
+
+Upstream LICENSE references: [ArcadeDB](https://github.com/ArcadeData/arcadedb/blob/main/LICENSE), [NebulaGraph](https://github.com/vesoft-inc/nebula/blob/master/LICENSE).
+
+### Embedded graph alternatives
+
+Unlike embedded relational DBs in `lab stack` (SQLite, DuckDB), embedded graph engines are **not** in the homelab-cli registry. The landscape is unstable: **Kuzu** (MIT) was archived in October 2025 after Apple’s acquisition. Community forks (**LadybugDB**, **bighorn**) are too early for official support.
+
+For local GraphRAG in Python:
+
+- Pin last Kuzu release: `uv pip install kuzu==0.11.3` (MIT)
+- Watch LadybugDB / bighorn on GitHub
+- Or run `lab services up arcadedb` and connect from your project over HTTP/binary
+
+Embedded graph in `lab stack` may arrive in a future PR when a fork stabilizes its release cycle.
 
 ## Relational
 
@@ -136,5 +195,7 @@ MinIO S3-compatible API + console; optional auto-created buckets at init.
 | clickhouse | `clickhouse-client` via compose exec |
 | grafana | `http://127.0.0.1:3000` |
 | minio | `http://127.0.0.1:9000` (API), `:9001` (console) |
+| arcadedb | `http://127.0.0.1:2480` (Studio), binary `:2424` |
+| nebulagraph | nGQL `:9669`, Studio `http://127.0.0.1:7001` |
 
 Use `lab services connect <id> --interactive` where a CLI client is available inside the container.

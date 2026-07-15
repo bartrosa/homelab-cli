@@ -23,6 +23,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `lab toolchain` → `lab stack` (alias preserved).
 - `services.runtime` default: `auto` (prefer docker on Ubuntu, podman on Silverblue).
 
+### Added — Graph Databases
+
+- Service category: **`graph`**
+- **ArcadeDB** (Apache 2.0) — multi-model graph + document + KV + vector, single container, Studio UI, Cypher/Gremlin/SQL, optional protocol plugins
+- **NebulaGraph** (Apache 2.0) — 4-container compose (metad + storaged + graphd + studio), nGQL, automated post-init for host registration and password setup
+- Service presets: **`graphrag`** (arcadedb + qdrant + minio + postgres), **`graph-lab`** (arcadedb + nebulagraph)
+- **`lab vector`** accepts graph databases with built-in vector search (forwards to `lab services up`)
+- Optional **`PostUpper`** interface for post-compose setup (NebulaGraph)
+- Docs: graph database catalog, licensing rationale, embedded graph alternatives (Kuzu / LadybugDB)
+
 ## [0.2.0] - TBD
 
 **Provisioning Release** — distribute `lab`, create verified bootable USB installers, and bootstrap Ubuntu or Fedora Silverblue on a fresh OS.

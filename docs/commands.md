@@ -144,9 +144,11 @@ lab services up --preset ml-stack --yes
 lab services connect postgres --interactive
 ```
 
-High-level wrappers: `lab obs up`, `lab vector up qdrant`, `lab data up postgres`.
+High-level wrappers: `lab obs up`, `lab vector up <id>`, `lab data up postgres`.
 
-See [`services.md`](services.md) for all 15 services, fields, and connection examples.
+Graph services (`--category graph`): `arcadedb`, `nebulagraph`. Presets: `graphrag`, `graph-lab`.
+
+See [`services.md`](services.md) for all 17 services, fields, and connection examples.
 
 ---
 
