@@ -81,13 +81,6 @@ func collectMountpoints(dev lsblkNode, out *[]string) {
 	}
 }
 
-func collectPartNames(dev lsblkNode, out *[]string) {
-	*out = append(*out, dev.Name)
-	for _, c := range dev.Children {
-		collectPartNames(c, out)
-	}
-}
-
 func collectUmountTargets(dev lsblkNode, out *[]string) {
 	if dev.Mountpoint != nil {
 		mp := strings.TrimSpace(*dev.Mountpoint)

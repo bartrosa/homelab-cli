@@ -27,5 +27,9 @@ func blockWriteBytes(device string) (int64, error) {
 	if err != nil {
 		return 0, err
 	}
+	const maxSectors = (1 << 63) / sectorSize
+	if sectors > maxSectors {
+		return 0, fmt.Errorf("sector count overflow for %s", name)
+	}
 	return int64(sectors) * sectorSize, nil
 }

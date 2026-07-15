@@ -19,7 +19,7 @@ func ParseSizeBytes(size string) (int64, error) {
 		'T': 1024 * 1024 * 1024 * 1024,
 	}
 	last := size[len(size)-1]
-	unitKey := byte(strings.ToUpper(string(last))[0])
+	unitKey := strings.ToUpper(string(last))[0]
 	if u, ok := units[unitKey]; ok {
 		numStr := normalizeSizeNumber(size[:len(size)-1])
 		f, err := strconv.ParseFloat(numStr, 64)
