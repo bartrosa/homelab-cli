@@ -19,7 +19,18 @@ profile.cov
 
 # Build artifacts
 /bin/
+lab
+
+# GoReleaser / local release output
 /dist/
+*.deb
+*.rpm
+homelab-cli_*.tar.gz
+checksums.txt
+homelab-cli_*_checksums.txt
+
+# Local dev toolchain (e.g. Go SDK for CI without system install)
+.tools/
 
 # Dependency directories (remove the comment below to include it)
 # vendor/
@@ -30,6 +41,11 @@ go.work.sum
 
 # env file
 .env
+.env.*
+
+# OS
+.DS_Store
+Thumbs.db
 
 # Editor/IDE
 # .idea/

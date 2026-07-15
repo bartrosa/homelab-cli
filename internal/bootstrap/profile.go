@@ -17,9 +17,12 @@ var embeddedProfiles embed.FS
 type StepType string
 
 const (
-	StepPkg        StepType = "pkg"
-	StepToolchain  StepType = "toolchain"
-	StepScript     StepType = "script"
+	// StepPkg installs distribution packages.
+	StepPkg StepType = "pkg"
+	// StepToolchain installs mise runtimes.
+	StepToolchain StepType = "toolchain"
+	// StepScript runs a homelab shell script.
+	StepScript StepType = "script"
 )
 
 // Step is one idempotent action in a profile.

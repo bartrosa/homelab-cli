@@ -1,3 +1,4 @@
+// Package media provides local media conversion helpers.
 package media
 
 import (

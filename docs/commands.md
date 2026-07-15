@@ -16,12 +16,30 @@ Run `lab <command> --help` for flags. Global flags apply to all commands: `--con
 | `lab bootstrap server` | Ubuntu server profile + optional homelab `install-server-deps.sh` step. | ✅ |
 | `lab bootstrap profile <name>` | Run built-in or config-defined profile. | ✅ |
 | `lab bootstrap list` | List embedded profiles. | ✅ |
+| `lab bootstrap essentials` | Baseline packages for Ubuntu or Silverblue (sections: system-update, cli-basics, …). | ✅ |
 
 Built-in profiles: `laptop-macos`, `laptop-linux`, `silverblue-laptop`, `server-ubuntu`.
 
 ```bash
 lab bootstrap laptop --dry-run
+lab bootstrap essentials --dry-run --target silverblue
 lab bootstrap profile dgx-spark   # from config bootstrap.profiles
+```
+
+### `lab iso`
+
+| Command | Description | Status |
+|---------|-------------|--------|
+| `lab iso list` | Supported distros and resolved versions. | ✅ |
+| `lab iso download <distro>` | Download and verify ISO to cache. | ✅ |
+| `lab iso disks` | List block devices; USB vs SYSTEM (Linux). | ✅ |
+| `lab iso write <iso> --to <device>` | Burn ISO with safety checks (Linux). | ✅ |
+
+Flow: `list` → `download` → `disks` → `write`.
+
+```bash
+lab iso download ubuntu-desktop
+lab iso write ~/.cache/homelab-cli/iso/ubuntu-24.04.3-desktop-amd64.iso --to /dev/sdb
 ```
 
 ### `lab pkg`
@@ -187,8 +205,10 @@ lab media heic ~/Pictures/import --quality 95 --force
 | Command | Description | Status |
 |---------|-------------|--------|
 | `lab version` | Build version, commit, date (`--output text\|json`). | ✅ |
+| `lab self-update` | Install latest release from GitHub (`--check`, `--version`, `--pre-release`). | ✅ |
 
 ```bash
 lab version --output json
+lab self-update --check
 lab --log-level debug services list
 ```

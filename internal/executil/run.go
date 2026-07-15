@@ -12,12 +12,12 @@ import (
 
 // Runner executes shell commands.
 type Runner struct {
-	Stdout   io.Writer
-	Stderr   io.Writer
-	DryRun   bool
-	Env      []string
-	WorkDir  string
-	Inherit  bool // append os.Environ when true
+	Stdout  io.Writer
+	Stderr  io.Writer
+	DryRun  bool
+	Env     []string
+	WorkDir string
+	Inherit bool // append os.Environ when true
 }
 
 // NewRunner returns a runner writing to stdout/stderr.

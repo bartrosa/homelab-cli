@@ -2,15 +2,16 @@ package cli
 
 import (
 	"context"
+	"errors"
+	"fmt"
+	"os"
+	"strings"
+
 	"github.com/bartrosa/homelab-cli/internal/cli/appctx"
 	"github.com/bartrosa/homelab-cli/internal/cli/commands"
 	"github.com/bartrosa/homelab-cli/internal/config"
 	"github.com/bartrosa/homelab-cli/internal/logging"
 	"github.com/bartrosa/homelab-cli/internal/ui"
-	"errors"
-	"fmt"
-	"os"
-	"strings"
 
 	"github.com/spf13/cobra"
 )
@@ -132,6 +133,8 @@ running local data services, mirroring repositories, operating clusters, and sup
 	add(commands.NewMCPCmd(), "workflow")
 
 	add(commands.NewVersionCmd(), "meta")
+	add(commands.NewSelfUpdateCmd(), "meta")
+	add(commands.NewISOCmd(), "foundation")
 
 	return root
 }

@@ -32,16 +32,41 @@ archives:
     name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
 
 checksum:
-  name_template: "{{ .ProjectName }}_{{ .Version }}_checksums.txt"
+  name_template: "checksums.txt"
   algorithm: sha256
 
+nfpms:
+  - id: lab
+    builds:
+      - lab
+    maintainer: "Your Name <you@example.com>"
+    description: "Homelab automation CLI from bare metal to GPU-served LLMs"
+    license: Apache-2.0
+    bindir: /usr/bin
+    section: utils
+    homepage: "https://github.com/bartrosa/homelab-cli"
+    recommends:
+      - mise
+      - podman
+      - distrobox
+    formats:
+      - deb
+      - rpm
+
 changelog:
+  sort: asc
   use: github
   filters:
     exclude:
       - "^docs:"
       - "^chore:"
       - "^test:"
+      - "^ci:"
+
+release:
+  draft: false
+  prerelease: auto
+  mode: replace
 
 # brews:
 #   - # TODO: add Homebrew tap after repository is public and naming is final

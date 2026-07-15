@@ -1,7 +1,6 @@
 package cli_test
 
 import (
-	"github.com/bartrosa/homelab-cli/internal/cli"
 	"bytes"
 	"context"
 	"encoding/json"
@@ -9,6 +8,8 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+
+	"github.com/bartrosa/homelab-cli/internal/cli"
 
 	"github.com/stretchr/testify/require"
 )

@@ -12,19 +12,19 @@ import (
 )
 
 const (
-	ubuntuMetaLTS   = "https://changelogs.ubuntu.com/meta-release-lts"
-	ubuntuMeta      = "https://changelogs.ubuntu.com/meta-release"
+	ubuntuMetaLTS  = "https://changelogs.ubuntu.com/meta-release-lts"
+	ubuntuMeta     = "https://changelogs.ubuntu.com/meta-release"
 	fedoraReleases = "https://dl.fedoraproject.org/pub/fedora/linux/releases/"
 	fedoraISOBase  = "https://dl.fedoraproject.org/pub/fedora/linux/releases/%d/Silverblue/x86_64/iso/"
 )
 
 // BootImage is a downloadable bootable ISO discovered from upstream mirrors.
 type BootImage struct {
-	ID          string
-	Label       string
-	Series      string
-	Kind        string // ubuntu-lts, ubuntu, fedora-silverblue
-	spec        isoSpec
+	ID     string
+	Label  string
+	Series string
+	Kind   string // ubuntu-lts, ubuntu, fedora-silverblue
+	spec   isoSpec
 }
 
 var ubuntuDesktopISO = regexp.MustCompile(`(?m)^([a-f0-9]{64})\s+\*?(ubuntu-[0-9]+\.[0-9]+(?:\.[0-9]+)?-desktop-amd64\.iso)\*?`)
@@ -160,6 +160,8 @@ func discoverFedoraSilverblue(ctx context.Context, client *http.Client) (BootIma
 }
 
 // ResolveBootImage finds a discovered image by distro flag (e.g. ubuntu-latest, ubuntu-lts-24.04, fedora-silverblue).
+//
+//revive:disable-next-line:unexported-return legacy helper returns internal isoSpec
 func ResolveBootImage(ctx context.Context, distro string) (isoSpec, string, error) {
 	distro = strings.TrimSpace(strings.ToLower(distro))
 	if distro == "" {
@@ -237,7 +239,7 @@ func fetchURL(ctx context.Context, client *http.Client, url string) ([]byte, err
 	if err != nil {
 		return nil, err
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 	if resp.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf("GET %s: %s", url, resp.Status)
 	}

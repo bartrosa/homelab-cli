@@ -26,9 +26,9 @@ func NewMediaCmd() *cobra.Command {
 	AddDryRunFlag(cmd)
 
 	heic := &cobra.Command{
-		Use:     "heic [directory]",
-		Short:   "Convert .HEIC photos to JPEG in a directory",
-		Long:    `Converts each .HEIC/.heic file to .jpg using heif-convert (quality 1–100). Skips when .jpg already exists unless --force.`,
+		Use:   "heic [directory]",
+		Short: "Convert .HEIC photos to JPEG in a directory",
+		Long:  `Converts each .HEIC/.heic file to .jpg using heif-convert (quality 1–100). Skips when .jpg already exists unless --force.`,
 		Example: `  lab media heic .
   lab media heic ~/Pictures/import --quality 95`,
 		Args: cobra.MaximumNArgs(1),

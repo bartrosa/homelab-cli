@@ -14,10 +14,14 @@ import (
 type DeployMode string
 
 const (
-	DeploySync      DeployMode = "sync"
+	// DeploySync rsync only.
+	DeploySync DeployMode = "sync"
+	// DeployProvision rsync plus postgres apply.
 	DeployProvision DeployMode = "provision"
-	DeployCompose   DeployMode = "compose"
-	DeployFull      DeployMode = "full"
+	// DeployCompose rsync plus remote compose up.
+	DeployCompose DeployMode = "compose"
+	// DeployFull provision and compose.
+	DeployFull DeployMode = "full"
 )
 
 // Deploy syncs homelab to server and optionally runs provision / compose.

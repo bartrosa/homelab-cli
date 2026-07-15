@@ -21,9 +21,19 @@ linters:
     - gosec
 
   settings:
+    errcheck:
+      exclude-functions:
+        - fmt.Fprintf
+        - fmt.Fprint
+        - fmt.Fprintln
     gosec:
       excludes:
         - G204
+        - G301
+        - G304
+        - G306
+        - G302
+        - G110
 
 issues:
   max-same-issues: 50

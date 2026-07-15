@@ -1,3 +1,4 @@
+// Package baremetal installs data-plane services directly on Linux hosts.
 package baremetal
 
 import (

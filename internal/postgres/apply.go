@@ -1,3 +1,4 @@
+// Package postgres applies homelab PostgreSQL instance YAML.
 package postgres
 
 import (
@@ -43,7 +44,7 @@ func applyInstance(ctx context.Context, inst Instance, adminPassword string) err
 	if err != nil {
 		return fmt.Errorf("connect: %w", err)
 	}
-	defer conn.Close(ctx)
+	defer func() { _ = conn.Close(ctx) }()
 
 	for _, u := range inst.Users {
 		if err := ensureUser(ctx, conn, u); err != nil {
@@ -87,7 +88,7 @@ func ensureDatabase(ctx context.Context, inst Instance, adminPassword string, d 
 	if err != nil {
 		return err
 	}
-	defer admin.Close(ctx)
+	defer func() { _ = admin.Close(ctx) }()
 	var exists bool
 	if err := admin.QueryRow(ctx, `SELECT EXISTS(SELECT 1 FROM pg_database WHERE datname=$1)`, d.Name).Scan(&exists); err != nil {
 		return err
@@ -108,7 +109,7 @@ func grantConnect(ctx context.Context, inst Instance, adminPassword, dbName, use
 	if err != nil {
 		return err
 	}
-	defer conn.Close(ctx)
+	defer func() { _ = conn.Close(ctx) }()
 	sql := fmt.Sprintf(`GRANT CONNECT ON DATABASE %s TO %s`, quoteIdent(dbName), quoteIdent(user))
 	_, err = conn.Exec(ctx, sql)
 	return err

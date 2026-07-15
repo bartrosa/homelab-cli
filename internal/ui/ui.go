@@ -68,10 +68,12 @@ func OK(w io.Writer, s Styles, msg string) {
 	_, _ = fmt.Fprintln(w, s.OK.Render("✓ "+msg))
 }
 
+// Warn prints a warning line.
 func Warn(w io.Writer, s Styles, msg string) {
 	_, _ = fmt.Fprintln(w, s.Warn.Render("! "+msg))
 }
 
+// Fail prints an error line.
 func Fail(w io.Writer, s Styles, msg string) {
 	_, _ = fmt.Fprintln(w, s.Err.Render("✗ "+msg))
 }

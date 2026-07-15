@@ -25,6 +25,7 @@ and optional dotfiles. Profiles are defined in the configuration file or built-i
 		newBootstrapServerCmd(),
 		newBootstrapProfileCmd(),
 		newBootstrapListCmd(),
+		newBootstrapEssentialsCmd(),
 	)
 
 	return cmd

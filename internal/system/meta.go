@@ -136,20 +136,20 @@ func parseApacheIndex(data []byte) []string {
 	return names
 }
 
-func latestNumericDir(data []byte, min int) (int, error) {
-	max := 0
+func latestNumericDir(data []byte, minVersion int) (int, error) {
+	highest := 0
 	for _, name := range parseApacheIndex(data) {
 		name = strings.TrimSuffix(name, "/")
 		n, err := strconv.Atoi(name)
-		if err != nil || n < min {
+		if err != nil || n < minVersion {
 			continue
 		}
-		if n > max {
-			max = n
+		if n > highest {
+			highest = n
 		}
 	}
-	if max == 0 {
+	if highest == 0 {
 		return 0, fmt.Errorf("no release directories found")
 	}
-	return max, nil
+	return highest, nil
 }
