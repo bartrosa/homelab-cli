@@ -13,10 +13,10 @@ import (
 )
 
 const (
-	downloadBarWidth   = 28
-	downloadRefresh    = 100 * time.Millisecond
-	connectSpinEvery   = 120 * time.Millisecond
-	nonTTYLogEvery     = 5 * time.Second
+	downloadBarWidth = 28
+	downloadRefresh  = 100 * time.Millisecond
+	connectSpinEvery = 120 * time.Millisecond
+	nonTTYLogEvery   = 5 * time.Second
 )
 
 // DownloadReporter renders HTTP download progress (bar, speed, ETA).

@@ -22,7 +22,7 @@ type Styles struct {
 }
 
 // NewStyles builds the palette; disable color when noColor or not a TTY.
-func NewStyles(w io.Writer, noColor bool) Styles {
+func NewStyles(_ io.Writer, noColor bool) Styles {
 	if noColor {
 		plain := lipgloss.NewStyle()
 		bold := lipgloss.NewStyle().Bold(true)
