@@ -1,0 +1,71 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Idempotent post-init for NebulaGraph:
+# 1. Wait for graphd to accept connections
+# 2. Register storage host if not already registered
+# 3. Set root password if auth enabled and password not yet set
+
+MAX_WAIT={{ .wait_timeout_seconds }}
+GRAPHD_HOST=graphd
+GRAPHD_PORT=9669
+USER=root
+DEFAULT_PASS=nebula
+NEW_PASS="${NEBULA_ROOT_PASSWORD:-}"
+
+wait_for_graphd() {
+    local i=0
+    while [ "$i" -lt "$MAX_WAIT" ]; do
+        if docker compose exec -T graphd nebula-console \
+            -addr "$GRAPHD_HOST" -port "$GRAPHD_PORT" \
+            -u "$USER" -p "$DEFAULT_PASS" \
+            -e "SHOW HOSTS;" > /dev/null 2>&1; then
+            return 0
+        fi
+        if [ -n "$NEW_PASS" ] && docker compose exec -T graphd nebula-console \
+            -addr "$GRAPHD_HOST" -port "$GRAPHD_PORT" \
+            -u "$USER" -p "$NEW_PASS" \
+            -e "SHOW HOSTS;" > /dev/null 2>&1; then
+            return 0
+        fi
+        sleep 2
+        i=$((i + 2))
+    done
+    echo "ERROR: graphd not reachable after ${MAX_WAIT}s"
+    return 1
+}
+
+exec_nebula() {
+    local pass="$1"
+    local query="$2"
+    docker compose exec -T graphd nebula-console \
+        -addr "$GRAPHD_HOST" -port "$GRAPHD_PORT" \
+        -u "$USER" -p "$pass" \
+        -e "$query"
+}
+
+wait_for_graphd
+
+current_pass=""
+if exec_nebula "$DEFAULT_PASS" "SHOW HOSTS;" > /dev/null 2>&1; then
+    current_pass="$DEFAULT_PASS"
+elif [ -n "$NEW_PASS" ] && exec_nebula "$NEW_PASS" "SHOW HOSTS;" > /dev/null 2>&1; then
+    current_pass="$NEW_PASS"
+else
+    echo "ERROR: neither default nor configured password works"
+    exit 1
+fi
+
+hosts_output=$(exec_nebula "$current_pass" "SHOW HOSTS;")
+if ! echo "$hosts_output" | grep -q "storaged0"; then
+    echo "→ Registering storage host storaged0:9779"
+    exec_nebula "$current_pass" 'ADD HOSTS "storaged0":9779;'
+    sleep 5
+fi
+
+if [ "$current_pass" = "$DEFAULT_PASS" ] && [ -n "$NEW_PASS" ] && [ "$NEW_PASS" != "$DEFAULT_PASS" ]; then
+    echo "→ Setting root password"
+    exec_nebula "$DEFAULT_PASS" "ALTER USER root WITH PASSWORD '$NEW_PASS';"
+fi
+
+echo "✅ NebulaGraph post-init complete"

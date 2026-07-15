@@ -1,0 +1,32 @@
+services:
+  arcadedb:
+    image: arcadedata/arcadedb:{{ .version }}
+    container_name: homelab-arcadedb
+    restart: unless-stopped
+    environment:
+      JAVA_OPTS: >-
+        -Xmx{{ .heap_size }}
+        -Darcadedb.server.rootPassword=${ARCADEDB_ROOT_PASSWORD}
+{{- if .default_databases_string }}
+        -Darcadedb.server.defaultDatabases={{ .default_databases_string }}
+{{- end }}
+        -Darcadedb.server.plugins={{ .plugins_string }}
+        -Darcadedb.server.mode=production
+    ports:
+      - "{{ .expose_bind }}:{{ .http_port }}:2480"
+      - "{{ .expose_bind }}:{{ .binary_port }}:2424"
+    volumes:
+      - {{ .data_dir }}:/home/arcadedb/databases
+      - {{ .state_dir }}/backups:/home/arcadedb/backups
+      - {{ .state_dir }}/logs:/home/arcadedb/log
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:2480/api/v1/ready || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 20s
+
+networks:
+  default:
+    name: homelab-net
+    external: true
