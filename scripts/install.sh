@@ -4,7 +4,7 @@ set -eu
 # homelab-cli install script (POSIX sh)
 # Usage:
 #   curl -sSL https://raw.githubusercontent.com/bartrosa/homelab-cli/main/scripts/install.sh | sh
-#   curl -sSL ... | sh -s -- --version v0.2.0
+#   curl -sSL ... | sh -s -- --version v0.1.0
 #   curl -sSL ... | sh -s -- --prefix "$HOME/.local"
 
 REPO="bartrosa/homelab-cli"
@@ -13,6 +13,9 @@ VERSION=""
 PREFIX=""
 FORCE=0
 CHECK=0
+NO_PATH=0
+
+PATH_MARKER="# homelab-cli: PATH"
 
 log() { printf '%s\n' "$*" >&2; }
 die() { log "error: $*"; exit 1; }
@@ -23,8 +26,9 @@ while [ $# -gt 0 ]; do
     --prefix) PREFIX="$2"; shift 2 ;;
     --force) FORCE=1; shift ;;
     --check) CHECK=1; shift ;;
+    --no-path) NO_PATH=1; shift ;;
     -h|--help)
-      log "Usage: install.sh [--version TAG] [--prefix PATH] [--force] [--check]"
+      log "Usage: install.sh [--version TAG] [--prefix PATH] [--force] [--check] [--no-path]"
       exit 0
       ;;
     *) die "unknown argument: $1" ;;
@@ -56,6 +60,26 @@ writable_dir() {
   return 0
 }
 
+detect_shell_rc() {
+  case "${SHELL:-}" in
+    */zsh)
+      printf '%s' "$HOME/.zshrc"
+      ;;
+    */bash)
+      printf '%s' "$HOME/.bashrc"
+      ;;
+    *)
+      if [ -f "$HOME/.bashrc" ]; then
+        printf '%s' "$HOME/.bashrc"
+      elif [ -f "$HOME/.profile" ]; then
+        printf '%s' "$HOME/.profile"
+      else
+        printf '%s' "$HOME/.profile"
+      fi
+      ;;
+  esac
+}
+
 choose_prefix() {
   if [ -n "$PREFIX" ]; then
     printf '%s' "$PREFIX"
@@ -68,7 +92,6 @@ choose_prefix() {
   home=${HOME:-}
   [ -n "$home" ] || die "HOME not set and /usr/local/bin not writable"
   log "info: /usr/local/bin not writable — installing to $home/.local/bin"
-  log "info: ensure $home/.local/bin is in your PATH"
   printf '%s' "$home/.local"
 }
 
@@ -85,6 +108,41 @@ in_path() {
     *:"$1":*) return 0 ;;
     *) return 1 ;;
   esac
+}
+
+path_configured_in_rc() {
+  rc=$1
+  bindir=$2
+  [ -f "$rc" ] || return 1
+  grep -qF "$PATH_MARKER" "$rc" 2>/dev/null && return 0
+  grep -qF "$bindir" "$rc" 2>/dev/null
+}
+
+ensure_path_in_rc() {
+  bindir=$1
+
+  if in_path "$bindir"; then
+    log "info: $bindir already in PATH for this session"
+    return 0
+  fi
+
+  rc=$(detect_shell_rc)
+  line="export PATH=\"$bindir:\$PATH\""
+
+  if path_configured_in_rc "$rc" "$bindir"; then
+    log "info: PATH already configured in $rc"
+    log "info: run: source $rc   (or open a new terminal)"
+    return 0
+  fi
+
+  mkdir -p "$(dirname "$rc")"
+  {
+    printf '\n%s\n' "$PATH_MARKER"
+    printf '%s\n' "$line"
+  } >> "$rc"
+
+  log "info: added $bindir to PATH in $rc"
+  log "info: run: source $rc   (or open a new terminal)"
 }
 
 main() {
@@ -109,9 +167,9 @@ main() {
   bindir="$prefix/bin"
   dest="$bindir/lab"
 
-	ver="${tag#v}"
-	asset="${PROJECT}_${ver}_${os}_${arch}.tar.gz"
-	base="https://github.com/${REPO}/releases/download/${tag}"
+  ver="${tag#v}"
+  asset="${PROJECT}_${ver}_${os}_${arch}.tar.gz"
+  base="https://github.com/${REPO}/releases/download/${tag}"
   url="${base}/${asset}"
   checksums_url="${base}/checksums.txt"
 
@@ -121,6 +179,9 @@ main() {
     log "[check] would download $url"
     log "[check] would verify with $checksums_url"
     log "[check] would install to $dest"
+    if [ "$NO_PATH" -eq 0 ] && ! in_path "$bindir"; then
+      log "[check] would append $bindir to $(detect_shell_rc)"
+    fi
     exit 0
   fi
 
@@ -153,17 +214,15 @@ main() {
     install -m 0755 "$tmp/lab" "$dest"
   fi
 
+  if [ "$NO_PATH" -eq 0 ]; then
+    ensure_path_in_rc "$bindir"
+  fi
+
   log ""
-  log "Next steps:"
+  log "Installed successfully."
   log "  lab version"
   log "  lab --help"
   log "  lab self-update"
-
-  if ! in_path "$bindir"; then
-    log ""
-    log "Add to your shell rc:"
-    log "  export PATH=\"$bindir:\$PATH\""
-  fi
 }
 
 main "$@"
