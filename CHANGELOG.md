@@ -9,6 +9,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Terminal output: theme-adaptive colors, bold/underlined table headers, structured `lab version` and `lab iso list|disks` layout (`--no-color` for plain text).
+- `lab iso download`: progress bar with speed and ETA, spinner while connecting, spinner during SHA256/GPG verification.
+- `lab iso download`: import upstream GPG signing keys before verification (Ubuntu, Fedora); prominent security banner on GPG failure.
+- `lab iso disks`: fix empty device list (missing `TYPE` column from lsblk).
+- `lab iso write`: interactive picker, `lab iso write ubuntu-desktop --usb`, `--device` alias for `--to`; new `lab iso images`.
+- `lab iso write`: fix lsblk device path (`/dev/sda` not `sda`); auto-unmount USB partitions before burn.
+- `lab iso write`: parse lsblk sizes with locale decimal comma (e.g. `58,6G`).
+- `lab iso write`: auto `sudo` for dd/sync; umount mounted partitions by mount path (not whole disk).
+- `lab iso write`: progress bar while burning (parse dd status); unified yellow `!` warnings (no emoji).
+- `lab iso write`: progress polls `/sys/block/*/stat` every 250ms (smooth bar, not dd stderr).
 - `scripts/install.sh`: automatically configure shell PATH when installing to a non-standard prefix; `--no-path` to opt out.
 - `scripts/uninstall.sh`: remove homelab-cli PATH block from shell rc on uninstall.
 
