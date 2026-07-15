@@ -7,6 +7,46 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added — v0.3.0 "Developer Environment"
+
+- **`lab stack`** (rename from `lab toolchain`; aliases `toolchain`, `tc`): component registry, dependency-ordered install, presets, GPU detection, shell PATH management (`shellrc`).
+- **26 stack components** across language, build-tool, container, GPU, VCS, package-manager, and database-embedded categories (Python/Node/Go/Rust/Scala/Kotlin, uv, CUDA/ROCm, DuckDB/SQLite, Docker/Podman, …). No Ruby, no .NET.
+- **`lab services` framework**: compose orchestrator, shared `homelab-net`, embedded templates, stdin prompt engine, secret handling, service presets.
+- **15 services**: postgres (pgvector/postgis/timescaledb plugins), mysql/mariadb, redis, valkey, mongodb, clickhouse, rabbitmq, nats, qdrant, weaviate, prometheus, grafana (auto-provisioned datasources), loki, tempo, minio.
+- **High-level wrappers**: `lab obs up/down`, `lab vector up`, `lab data up`.
+- **Config**: `stack.*` and extended `services.*` (runtime `auto`, instances, presets).
+- **Docs**: [`docs/services.md`](docs/services.md), updated README/commands/configuration.
+- **Tests**: stack orchestrator/presets/shellrc/gpu, services orchestrator/templates/postgres, prompt stdin.
+
+### Changed
+
+- `lab toolchain` → `lab stack` (alias preserved).
+- `services.runtime` default: `auto` (prefer docker on Ubuntu, podman on Silverblue).
+
+## [0.2.0] - TBD
+
+**Provisioning Release** — distribute `lab`, create verified bootable USB installers, and bootstrap Ubuntu or Fedora Silverblue on a fresh OS.
+
+Implementation landed iteratively in v0.1.0–v0.1.1; v0.2.0 is the documented stable milestone for the full workflow.
+
+### Added
+
+- Release plumbing: GoReleaser `.tar.gz`, `.deb`, `.rpm`, and `checksums.txt` for linux/darwin amd64/arm64.
+- `scripts/install.sh` and `scripts/uninstall.sh` — curl install with SHA256 verification, prefix detection, optional PATH setup.
+- `lab self-update` with `--check`, `--version`, `--pre-release`, and `--yes` (`internal/updater`).
+- `lab iso list|download|disks|images|write` — ISO catalog, verified downloads (SHA256 + GPG), USB disk listing, safe `dd` writes on Linux (`internal/iso`).
+- `lab bootstrap essentials` — idempotent baseline for Ubuntu and Fedora Silverblue (`internal/bootstrap`, `internal/pkgmgr`: apt, rpm-ostree, detect).
+- Testable process runner: `internal/exec`.
+- Provisioning guide: [`docs/provisioning.md`](docs/provisioning.md).
+
+### Changed
+
+- README: v0.2.0 provisioning walkthrough, install/upgrade docs, full command status table.
+- `docs/commands.md`: ISO interactive write, `bootstrap essentials` flags, `self-update` reference.
+- `docs/architecture.md`: adapter model, `internal/iso` and `internal/updater` packages.
+- Terminal UX (carried from v0.1.1): progress bars, GPG key import, theme-adaptive output, interactive ISO picker.
+- CI: GitHub Actions Node 24 runtime; golangci-lint v2.12.2 for Go 1.25.
+
 ## [0.1.1] - 2026-07-15
 
 ### Changed
