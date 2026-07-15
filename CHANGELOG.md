@@ -33,7 +33,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Optional **`PostUpper`** interface for post-compose setup (NebulaGraph)
 - Docs: graph database catalog, licensing rationale, embedded graph alternatives (Kuzu / LadybugDB)
 
-## [0.2.0] - TBD
+## [0.2.0] - 2026-07-15
 
 **Provisioning Release** — distribute `lab`, create verified bootable USB installers, and bootstrap Ubuntu or Fedora Silverblue on a fresh OS.
 
