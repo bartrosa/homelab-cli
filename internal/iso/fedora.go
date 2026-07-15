@@ -70,11 +70,12 @@ func resolveFedoraSilverblue(arch, version string) (Release, error) {
 
 	checksumFile := fmt.Sprintf("Fedora-Silverblue-%s-%s-%s-CHECKSUM", release, subrelease, farch)
 	return Release{
-		Version:     release,
-		ISOURL:      isoDir + isoFile,
-		ChecksumURL: isoDir + checksumFile,
-		GPGKeyURL:   "",
-		ISOFilename: isoFile,
+		Version:         release,
+		ISOURL:          isoDir + isoFile,
+		ChecksumURL:     isoDir + checksumFile,
+		ChecksumSigKind: SigClearsigned,
+		SigningKeyURLs:  []string{"https://fedoraproject.org/fedora.gpg"},
+		ISOFilename:     isoFile,
 	}, nil
 }
 

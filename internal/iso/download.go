@@ -11,6 +11,8 @@ import (
 	"path/filepath"
 	"strings"
 	"time"
+
+	"github.com/bartrosa/homelab-cli/internal/ui"
 )
 
 // DownloadOptions configures ISO download.
@@ -20,6 +22,7 @@ type DownloadOptions struct {
 	OutputDir string
 	NoVerify  bool
 	Force     bool
+	NoColor   bool
 	Stdout    io.Writer
 	Client    *http.Client
 }
@@ -60,41 +63,58 @@ func DownloadISO(ctx context.Context, distro Distro, opts DownloadOptions) (Down
 		}
 	}
 
-	fmt.Fprintf(opts.Stdout, "Downloading %s\n", rel.ISOURL)
-	if err := downloadFile(ctx, opts.Client, rel.ISOURL, dest, opts.Stdout); err != nil {
+	fmt.Fprintf(opts.Stdout, "Downloading %s\n", rel.ISOFilename)
+	if err := downloadFile(ctx, opts.Client, rel.ISOURL, dest, opts.Stdout, opts.NoColor); err != nil {
 		return DownloadResult{}, err
 	}
-	fmt.Fprintln(opts.Stdout)
 
-	sumData, err := fetchBytes(ctx, opts.Client, rel.ChecksumURL)
-	if err != nil {
-		return DownloadResult{}, fmt.Errorf("checksum file: %w", err)
-	}
-	want, ok := findSHA256(string(sumData), rel.ISOFilename)
-	if !ok {
-		// Fedora CHECKSUM format
-		want, ok = findFedoraChecksum(string(sumData), rel.ISOFilename)
-	}
-	if !ok {
-		return DownloadResult{}, fmt.Errorf("checksum entry not found for %s", rel.ISOFilename)
-	}
-	if err := verifyFileSHA256(dest, want); err != nil {
-		return DownloadResult{}, err
-	}
-	fmt.Fprintln(opts.Stdout, "SHA256 verified")
-
-	if !opts.NoVerify && rel.GPGKeyURL != "" {
-		if err := VerifyGPG(ctx, rel); err != nil {
-			return DownloadResult{}, err
+	if err := ui.RunWithSpinner(opts.Stdout, opts.NoColor, "Verifying SHA256", func() error {
+		sumData, err := fetchBytes(ctx, opts.Client, rel.ChecksumURL)
+		if err != nil {
+			return fmt.Errorf("checksum file: %w", err)
 		}
-		fmt.Fprintln(opts.Stdout, "GPG signature verified")
+		want, ok := findSHA256(string(sumData), rel.ISOFilename)
+		if !ok {
+			want, ok = findFedoraChecksum(string(sumData), rel.ISOFilename)
+		}
+		if !ok {
+			return fmt.Errorf("checksum entry not found for %s", rel.ISOFilename)
+		}
+		return verifyFileSHA256(dest, want)
+	}); err != nil {
+		return DownloadResult{}, err
+	}
+	fmt.Fprintln(opts.Stdout, "  SHA256 verified")
+
+	needsGPG := rel.ChecksumSigKind == SigClearsigned || rel.ChecksumSigURL != ""
+	if !opts.NoVerify && needsGPG {
+		styles := ui.NewStyles(opts.Stdout, opts.NoColor)
+		if err := ui.RunWithSpinner(opts.Stdout, opts.NoColor, "Verifying GPG signature", func() error {
+			return VerifyGPG(ctx, rel)
+		}); err != nil {
+			ui.SecurityWarning(opts.Stdout, styles, opts.NoColor,
+				"GPG VERIFICATION FAILED",
+				"The checksum signature could NOT be verified with upstream signing keys.",
+				"This may indicate a tampered download, compromised mirror, or man-in-the-middle attack.",
+				"DO NOT install from this ISO: "+dest,
+				"Delete the file and re-download, or verify manually (see ubuntu.com/tutorials/how-to-verify-ubuntu).",
+				"",
+				"Details: "+err.Error(),
+			)
+			return DownloadResult{}, fmt.Errorf("gpg verification failed: %w", err)
+		}
+		fmt.Fprintln(opts.Stdout, "  GPG signature verified")
 	}
 
 	fmt.Fprintf(opts.Stdout, "Verified ISO: %s\n", dest)
 	return DownloadResult{Path: dest}, nil
 }
 
-func downloadFile(ctx context.Context, client *http.Client, url, dest string, progress io.Writer) error {
+func downloadFile(ctx context.Context, client *http.Client, url, dest string, out io.Writer, noColor bool) error {
+	rep := ui.NewDownloadReporter(out, noColor)
+	rep.BeginConnect("Connecting to server")
+	defer rep.EndConnect()
+
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
 	if err != nil {
 		return err
@@ -114,45 +134,12 @@ func downloadFile(ctx context.Context, client *http.Client, url, dest string, pr
 	}
 	defer closeFile(f)
 
-	pr := &byteProgress{w: progress, total: resp.ContentLength}
-	if _, err := io.Copy(f, io.TeeReader(resp.Body, pr)); err != nil {
+	rep.SetTotal(resp.ContentLength)
+	if _, err := io.Copy(f, io.TeeReader(resp.Body, rep.Writer())); err != nil {
 		return err
 	}
-	pr.finish()
+	rep.Finish()
 	return nil
-}
-
-type byteProgress struct {
-	w       io.Writer
-	total   int64
-	read    int64
-	last    time.Time
-	lastPct int
-}
-
-func (p *byteProgress) Write(b []byte) (int, error) {
-	n := len(b)
-	p.read += int64(n)
-	now := time.Now()
-	if p.w != nil && (p.last.IsZero() || now.Sub(p.last) >= 500*time.Millisecond) {
-		p.last = now
-		if p.total > 0 {
-			pct := int(p.read * 100 / p.total)
-			if pct != p.lastPct {
-				fmt.Fprintf(p.w, "\rProgress: %d%% (%d / %d bytes)", pct, p.read, p.total)
-				p.lastPct = pct
-			}
-		} else {
-			fmt.Fprintf(p.w, "\rDownloaded %d bytes", p.read)
-		}
-	}
-	return n, nil
-}
-
-func (p *byteProgress) finish() {
-	if p.w != nil {
-		fmt.Fprintln(p.w)
-	}
 }
 
 func fetchBytes(ctx context.Context, client *http.Client, url string) ([]byte, error) {

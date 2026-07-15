@@ -29,6 +29,22 @@ func TestParseLSBLKJSON_classifiesUSB(t *testing.T) {
 	require.Equal(t, "usb", disks[2].Tran)
 }
 
+func TestParseLSBLKJSON_withoutTypeColumn(t *testing.T) {
+	const noType = `{
+  "blockdevices": [
+    {"name":"nvme0n1","size":"1T","model":"WD_BLACK","tran":"nvme","rm":false},
+    {"name":"sdb","size":"58G","model":"SanDisk","tran":"usb","rm":true},
+    {"name":"loop0","size":"4K","model":null,"tran":null,"rm":false}
+  ]
+}`
+	disks, err := iso.ParseLSBLKJSON(noType)
+	require.NoError(t, err)
+	require.Len(t, disks, 2)
+	require.Equal(t, "/dev/nvme0n1", disks[0].Device)
+	require.Equal(t, "/dev/sdb", disks[1].Device)
+	require.Equal(t, iso.DiskUSB, disks[1].Type)
+}
+
 func TestClassifyDisk(t *testing.T) {
 	require.Equal(t, iso.DiskUSB, iso.ClassifyDisk(true, "sata"))
 	require.Equal(t, iso.DiskUSB, iso.ClassifyDisk(false, "usb"))
