@@ -42,23 +42,3 @@ func promptChoice(r io.Reader, w io.Writer, title string, options []string, defa
 	}
 	return n - 1, nil
 }
-
-func promptLine(r io.Reader, w io.Writer, prompt, defaultVal string) (string, error) {
-	if defaultVal != "" {
-		fmt.Fprintf(w, "%s [%s]: ", prompt, defaultVal)
-	} else {
-		fmt.Fprint(w, prompt)
-	}
-	sc := bufio.NewScanner(r)
-	if !sc.Scan() {
-		if err := sc.Err(); err != nil {
-			return "", err
-		}
-		return defaultVal, nil
-	}
-	line := strings.TrimSpace(sc.Text())
-	if line == "" {
-		return defaultVal, nil
-	}
-	return line, nil
-}
