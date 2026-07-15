@@ -24,6 +24,7 @@ type Config struct {
 	Server    ServerConfig    `mapstructure:"server"`
 	Cluster   ClusterConfig   `mapstructure:"cluster"`
 	Storage   StorageConfig   `mapstructure:"storage"`
+	Stack     StackConfig     `mapstructure:"stack"`
 }
 
 // HomelabConfig points at the personal homelab repo for scripts and compose stacks.
@@ -98,8 +99,24 @@ type RepoProvider struct {
 
 // ServicesConfig describes local compose stacks and runtime.
 type ServicesConfig struct {
-	StacksDir string `mapstructure:"stacks_dir"`
-	Runtime   string `mapstructure:"runtime"`
+	StacksDir string                    `mapstructure:"stacks_dir"`
+	Runtime   string                    `mapstructure:"runtime"`
+	Network   string                    `mapstructure:"network"`
+	Instances map[string]map[string]any `mapstructure:"instances"`
+	Presets   map[string][]string       `mapstructure:"presets"`
+}
+
+// StackConfig describes developer stack presets and component overrides.
+type StackConfig struct {
+	DefaultPreset string                       `mapstructure:"default_preset"`
+	Presets       map[string][]string          `mapstructure:"presets"`
+	Components    map[string]ComponentOverride `mapstructure:"components"`
+}
+
+// ComponentOverride pins a stack component version or enabled flag.
+type ComponentOverride struct {
+	Version string `mapstructure:"version"`
+	Enabled *bool  `mapstructure:"enabled"`
 }
 
 // ClusterConfig describes Kubernetes client defaults.
@@ -133,7 +150,15 @@ func Default() *Config {
 		},
 		Services: ServicesConfig{
 			StacksDir: "~/.config/homelab-cli/stacks",
-			Runtime:   "podman",
+			Runtime:   "auto",
+			Network:   "homelab-net",
+			Instances: map[string]map[string]any{},
+			Presets:   map[string][]string{},
+		},
+		Stack: StackConfig{
+			DefaultPreset: "basic",
+			Presets:       map[string][]string{},
+			Components:    map[string]ComponentOverride{},
 		},
 		Cluster: ClusterConfig{
 			Kubeconfig: defaultKubeconfigPath(),
@@ -210,6 +235,8 @@ func bindDefaults(v *viper.Viper) {
 	v.SetDefault("repos.backup_dir", d.Repos.BackupDir)
 	v.SetDefault("services.stacks_dir", d.Services.StacksDir)
 	v.SetDefault("services.runtime", d.Services.Runtime)
+	v.SetDefault("services.network", d.Services.Network)
+	v.SetDefault("stack.default_preset", d.Stack.DefaultPreset)
 	v.SetDefault("cluster.kubeconfig", d.Cluster.Kubeconfig)
 	v.SetDefault("cluster.context", d.Cluster.Context)
 	v.SetDefault("storage.endpoint", d.Storage.Endpoint)
@@ -225,6 +252,21 @@ func normalize(c *Config) {
 	}
 	if c.Services.Runtime == "" {
 		c.Services.Runtime = Default().Services.Runtime
+	}
+	if c.Services.Network == "" {
+		c.Services.Network = Default().Services.Network
+	}
+	if c.Services.Instances == nil {
+		c.Services.Instances = map[string]map[string]any{}
+	}
+	if c.Services.Presets == nil {
+		c.Services.Presets = map[string][]string{}
+	}
+	if c.Stack.Presets == nil {
+		c.Stack.Presets = map[string][]string{}
+	}
+	if c.Stack.Components == nil {
+		c.Stack.Components = map[string]ComponentOverride{}
 	}
 	if c.Cluster.Kubeconfig == "" {
 		c.Cluster.Kubeconfig = Default().Cluster.Kubeconfig

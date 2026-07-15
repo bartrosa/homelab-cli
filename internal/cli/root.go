@@ -102,7 +102,7 @@ running local data services, mirroring repositories, operating clusters, and sup
 
 	add(commands.NewBootstrapCmd(), "foundation")
 	add(commands.NewPkgCmd(), "foundation")
-	add(commands.NewToolchainCmd(), "foundation")
+	add(commands.NewStackCmd(), "foundation")
 	add(commands.NewServicesCmd(), "foundation")
 
 	add(commands.NewReposCmd(), "repos")

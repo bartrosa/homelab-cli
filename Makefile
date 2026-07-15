@@ -31,6 +31,9 @@ install: ## go install with ldflags
 test: ## Run tests
 	go test ./... -race -cover
 
+test-integration: ## Run compose integration tests (not in CI)
+	go test ./... -tags=integration -cover
+
 lint: ## Run golangci-lint
 	go run github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.12.2 run
 

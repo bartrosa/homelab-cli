@@ -1,0 +1,16 @@
+services:
+  loki:
+    image: grafana/loki:3.2.1
+    container_name: homelab-loki
+    restart: unless-stopped
+    command: -config.file=/etc/loki/local-config.yaml
+    ports:
+      - "${PORT}:3100"
+    volumes:
+      - ${DATA_DIR}/data:/loki
+    networks:
+      - homelab-net
+
+networks:
+  homelab-net:
+    external: true

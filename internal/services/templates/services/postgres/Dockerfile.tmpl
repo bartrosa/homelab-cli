@@ -1,0 +1,11 @@
+FROM postgres:16.4-alpine
+{{- if has "pgvector" .Plugins }}
+RUN apk add --no-cache postgresql-pgvector
+{{- end }}
+{{- if has "postgis" .Plugins }}
+RUN apk add --no-cache postgis
+{{- end }}
+{{- if has "timescaledb" .Plugins }}
+RUN echo "timescaledb extension requires timescaledb image; using community packages where available" >&2
+RUN apk add --no-cache timescaledb-toolkit || true
+{{- end }}

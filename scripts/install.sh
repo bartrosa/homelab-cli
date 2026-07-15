@@ -4,7 +4,7 @@ set -eu
 # homelab-cli install script (POSIX sh)
 # Usage:
 #   curl -sSL https://raw.githubusercontent.com/bartrosa/homelab-cli/main/scripts/install.sh | sh
-#   curl -sSL ... | sh -s -- --version v0.1.0
+#   curl -sSL ... | sh -s -- --version v0.2.0
 #   curl -sSL ... | sh -s -- --prefix "$HOME/.local"
 
 REPO="bartrosa/homelab-cli"

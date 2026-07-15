@@ -1,0 +1,17 @@
+services:
+  nats:
+    image: nats:2.10.22-alpine
+    container_name: homelab-nats
+    restart: unless-stopped
+    command: ["-m", "8222"]
+    ports:
+      - "${PORT}:4222"
+      - "${MONITOR_PORT}:8222"
+    volumes:
+      - ${DATA_DIR}/data:/data
+    networks:
+      - homelab-net
+
+networks:
+  homelab-net:
+    external: true

@@ -39,7 +39,7 @@ nfpms:
   - id: lab
     builds:
       - lab
-    maintainer: "Your Name <you@example.com>"
+    maintainer: "Bart Rosa <contact@bartrosa.dev>"
     description: "Homelab automation CLI from bare metal to GPU-served LLMs"
     license: Apache-2.0
     bindir: /usr/bin

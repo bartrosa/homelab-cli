@@ -6,7 +6,7 @@
 - `make`, `git`.
 - Optional: `goreleaser` locally if you are cutting releases.
 
-`make ci` downloads `golangci-lint` and formatters via `go run` pins — no global install required.
+`make ci` downloads **golangci-lint v2.12.2** and formatters via `go run` pins — no global install required.
 
 ## Getting started
 

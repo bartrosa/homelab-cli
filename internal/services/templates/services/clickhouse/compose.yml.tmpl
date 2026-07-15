@@ -1,0 +1,19 @@
+services:
+  clickhouse:
+    image: clickhouse/clickhouse-server:24.8.4
+    container_name: homelab-clickhouse
+    restart: unless-stopped
+    environment:
+      CLICKHOUSE_USER: ${USER}
+      CLICKHOUSE_PASSWORD: ${PASSWORD}
+      CLICKHOUSE_DEFAULT_ACCESS_MANAGEMENT: "1"
+    ports:
+      - "${PORT}:8123"
+    volumes:
+      - ${DATA_DIR}/data:/var/lib/clickhouse
+    networks:
+      - homelab-net
+
+networks:
+  homelab-net:
+    external: true

@@ -1,0 +1,19 @@
+services:
+  prometheus:
+    image: prom/prometheus:v2.55.1
+    container_name: homelab-prometheus
+    restart: unless-stopped
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.path=/prometheus
+    ports:
+      - "${PORT}:9090"
+    volumes:
+      - ${DATA_DIR}/data:/prometheus
+      - ${CONFIG_DIR}/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    networks:
+      - homelab-net
+
+networks:
+  homelab-net:
+    external: true

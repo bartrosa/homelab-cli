@@ -2,6 +2,10 @@
 
 > **Legend:** ✅ implemented · 🚧 scaffolded (`not implemented yet`)
 
+**v0.3.0 (Developer Environment):** `lab stack`, full `lab services` framework, and high-level `lab obs` / `lab vector` / `lab data` wrappers.
+
+**v0.2.0 (Provisioning Release):** install script, `lab self-update`, `lab iso *`, and `lab bootstrap essentials` are ✅ ready. See [`provisioning.md`](provisioning.md) for the full new-machine workflow.
+
 Run `lab <command> --help` for flags. Global flags apply to all commands: `--config`, `--homelab-root`, `--dry-run`, `--no-color`, `--log-level`, `--log-format`.
 
 ---
@@ -20,9 +24,20 @@ Run `lab <command> --help` for flags. Global flags apply to all commands: `--con
 
 Built-in profiles: `laptop-macos`, `laptop-linux`, `silverblue-laptop`, `server-ubuntu`.
 
+| Flag | Description |
+|------|-------------|
+| `--target` | `auto` (default), `ubuntu`, or `silverblue` |
+| `--yes` | Non-interactive; accept defaults |
+| `--skip` | Comma-separated sections to skip (e.g. `docker,mise`) |
+| `--only` | Comma-separated sections to run (e.g. `cli-basics,build`) |
+| `--dry-run` | Print planned commands without executing (global flag) |
+
+Sections: `system-update`, `cli-basics`, `shell-tools`, `build`, `container-runtime`, `mise`, `distrobox`, `flatpak-flathub`.
+
 ```bash
 lab bootstrap laptop --dry-run
 lab bootstrap essentials --dry-run --target silverblue
+lab bootstrap essentials --only cli-basics --yes
 lab bootstrap profile dgx-spark   # from config bootstrap.profiles
 ```
 
@@ -31,16 +46,25 @@ lab bootstrap profile dgx-spark   # from config bootstrap.profiles
 | Command | Description | Status |
 |---------|-------------|--------|
 | `lab iso list` | Supported distros and resolved versions. | ✅ |
-| `lab iso download <distro>` | Download and verify ISO to cache. | ✅ |
+| `lab iso download <distro>` | Download and verify ISO to cache (GPG + SHA256). | ✅ |
+| `lab iso images` | List cached ISO files ready to burn. | ✅ |
 | `lab iso disks` | List block devices; USB vs SYSTEM (Linux). | ✅ |
-| `lab iso write <iso> --to <device>` | Burn ISO with safety checks (Linux). | ✅ |
+| `lab iso write [distro\|path]` | Burn ISO with safety checks (Linux). Interactive if no args. | ✅ |
 
 Flow: `list` → `download` → `disks` → `write`.
 
 ```bash
 lab iso download ubuntu-desktop
+lab iso images
+lab iso write                              # interactive: pick cached ISO + USB drive
+lab iso write ubuntu-desktop --usb         # burn by distro name / cached alias
 lab iso write ~/.cache/homelab-cli/iso/ubuntu-24.04.3-desktop-amd64.iso --to /dev/sdb
+lab iso write ubuntu-desktop --device sda  # --device is alias for --to
 ```
+
+On non-Linux platforms, `disks` and `write` return `not implemented yet` (stubs).
+
+**Note:** `lab system usb` is an alternate path that discovers Ubuntu/Fedora images from release metadata and writes in one step. Prefer `lab iso` for the verified download + cache + burn workflow.
 
 ### `lab pkg`
 
@@ -50,30 +74,81 @@ lab iso write ~/.cache/homelab-cli/iso/ubuntu-24.04.3-desktop-amd64.iso --to /de
 | `lab pkg ensure <name> [more...]` | Install only if missing. | ✅ |
 | `lab pkg list` | Show common packages and detected backend. | ✅ |
 
-### `lab toolchain`
+### `lab stack` (alias: `lab toolchain`, `lab tc`)
+
+Developer environment components: languages, build tools, containers, GPU stacks, embedded databases.
 
 | Command | Description | Status |
 |---------|-------------|--------|
-| `lab toolchain install <lang> [more...]` | Install runtimes via `mise`. | ✅ |
-| `lab toolchain list` | List installed toolchains. | ✅ |
-| `lab toolchain use <lang> <version>` | Activate a version. | ✅ |
+| `lab stack list [--category]` | List available components by category. | ✅ |
+| `lab stack list-installed` | Show installed components and versions. | ✅ |
+| `lab stack info <component>` | Component details (backend, requires, PATH entries). | ✅ |
+| `lab stack gpu` | Detect GPUs and suggest compute stacks. | ✅ |
+| `lab stack install <component>...` | Install components (dependency order, skip if installed). | ✅ |
+| `lab stack install --preset <name> [--gpu]` | Install a preset bundle. | ✅ |
+| `lab stack preset list` | List stack presets. | ✅ |
+| `lab stack preset show <name>` | Show components in a preset. | ✅ |
+| `lab stack path` | Print managed shell PATH block. | ✅ |
+| `lab stack path refresh` | Regenerate PATH block in shell rc. | ✅ |
+| `lab stack path remove` | Remove managed block. | ✅ |
+| `lab stack use <lang> <version>` | Activate mise version (legacy). | ✅ |
+
+| Flag | Description |
+|------|-------------|
+| `--yes` | Non-interactive |
+| `--dry-run` | Print plan only |
+| `--force` | Reinstall / override GPU checks |
+| `--skip-path` | Skip shell rc update |
+| `--component-version` | Override version for install |
+
+```bash
+lab stack install --preset ml --yes
+lab stack install postgres duckdb sqlite --yes   # embedded DBs in stack, not services
+lab stack install rust --yes
+lab stack install --preset gpu-nvidia --yes      # adds CUDA when NVIDIA GPU detected
+lab toolchain install python --yes               # alias works
+```
 
 ### `lab services`
 
-Manages compose stacks under `homelab.root` (e.g. `ml-stack/podman-compose.yml`). Runtime from `services.runtime` (default `podman-compose`).
+Compose-backed local services on shared network `homelab-net`. Config under `~/.config/homelab-cli/services/<id>/`.
 
 | Command | Description | Status |
 |---------|-------------|--------|
-| `lab services up <name> [more...]` | Start stack(s). | ✅ |
-| `lab services down <name> [more...]` | Stop stack(s). | ✅ |
-| `lab services list` | List stacks and compose paths. | ✅ |
-| `lab services logs <name>` | Tail logs. | ✅ |
-| `lab services ensure [ml-stack]` | `podman-compose up -d` for ml-stack; print service URLs. | ✅ |
+| `lab services list [--category]` | List services and running/stopped status. | ✅ |
+| `lab services info <id>` | Description and config schema. | ✅ |
+| `lab services init <id>` | Interactive wizard or `--set` / `--yes`. | ✅ |
+| `lab services up <id> [more...]` | Start service(s) or `--preset`. | ✅ |
+| `lab services down <id> [more...]` | Stop service(s). | ✅ |
+| `lab services restart <id>` | Restart one service. | ✅ |
+| `lab services status [id]` | Runtime status. | ✅ |
+| `lab services logs <id> [-f] [--tail N]` | Tail logs (compose). | 🚧 partial |
+| `lab services connect <id> [--interactive]` | Print connection string or open CLI client. | ✅ |
+| `lab services rm <id> [--data]` | Remove config (+ data with `--data`). | ✅ |
+| `lab services preset list` | List service presets. | ✅ |
+| `lab services preset show <name>` | Show services in preset. | ✅ |
+| `lab services ensure [ml-stack]` | Legacy homelab-repo ml-stack compose. | ✅ |
+
+| Flag | Description |
+|------|-------------|
+| `--yes` | Non-interactive init |
+| `--set key=value` | Config override (repeatable; comma lists for multiselect) |
+| `--preset` | Preset name for init/up |
+| `--force` | Overwrite existing init |
 
 ```bash
-lab services up ml-stack
-lab services ensure
+lab services init postgres --set plugins=pgvector,postgis --set expose=local --yes
+lab services up postgres
+lab services up --preset observability --yes
+lab services up --preset ml-stack --yes
+lab services connect postgres --interactive
 ```
+
+High-level wrappers: `lab obs up`, `lab vector up <id>`, `lab data up postgres`.
+
+Graph services (`--category graph`): `arcadedb`, `nebulagraph`. Presets: `graphrag`, `graph-lab`.
+
+See [`services.md`](services.md) for all 17 services, fields, and connection examples.
 
 ---
 
@@ -205,10 +280,20 @@ lab media heic ~/Pictures/import --quality 95 --force
 | Command | Description | Status |
 |---------|-------------|--------|
 | `lab version` | Build version, commit, date (`--output text\|json`). | ✅ |
-| `lab self-update` | Install latest release from GitHub (`--check`, `--version`, `--pre-release`). | ✅ |
+| `lab self-update` | Install latest release from GitHub. | ✅ |
+
+| Flag | Command | Description |
+|------|---------|-------------|
+| `--check` | `self-update` | Exit 0 if current, 3 if update available, 1 on error |
+| `--version <tag>` | `self-update` | Force install specific release (downgrade allowed) |
+| `--pre-release` | `self-update` | Include GitHub prereleases |
+| `--yes` | `self-update` | Skip confirmation prompt |
+
+If the installed binary is not writable (e.g. `/usr/local/bin/lab`), `self-update` prints instructions to re-run with `sudo` — it does not escalate privileges automatically.
 
 ```bash
 lab version --output json
 lab self-update --check
+lab self-update --yes
 lab --log-level debug services list
 ```

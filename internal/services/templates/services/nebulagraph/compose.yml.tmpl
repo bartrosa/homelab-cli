@@ -1,0 +1,103 @@
+services:
+  metad0:
+    image: vesoft/nebula-metad:{{ .version }}
+    container_name: homelab-nebulagraph-metad0
+    restart: unless-stopped
+    command:
+      - --meta_server_addrs=metad0:9559
+      - --local_ip=metad0
+      - --ws_ip=metad0
+      - --port=9559
+      - --ws_http_port={{ .meta_http_port }}
+      - --data_path=/data/meta
+      - --log_dir=/logs
+      - --v=0
+      - --minloglevel=0
+{{- if .enable_auth }}
+      - --enable_authorize=true
+      - --auth_type=password
+{{- end }}
+    volumes:
+      - {{ .data_dir }}/meta0:/data/meta
+      - {{ .state_dir }}/logs/meta0:/logs
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:{{ .meta_http_port }}/status || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 15s
+
+  storaged0:
+    image: vesoft/nebula-storaged:{{ .version }}
+    container_name: homelab-nebulagraph-storaged0
+    restart: unless-stopped
+    depends_on:
+      metad0:
+        condition: service_healthy
+    command:
+      - --meta_server_addrs=metad0:9559
+      - --local_ip=storaged0
+      - --ws_ip=storaged0
+      - --port=9779
+      - --ws_http_port={{ .storage_http_port }}
+      - --data_path=/data/storage
+      - --log_dir=/logs
+      - --v=0
+      - --minloglevel=0
+    volumes:
+      - {{ .data_dir }}/storage0:/data/storage
+      - {{ .state_dir }}/logs/storage0:/logs
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:{{ .storage_http_port }}/status || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 15s
+
+  graphd:
+    image: vesoft/nebula-graphd:{{ .version }}
+    container_name: homelab-nebulagraph-graphd
+    restart: unless-stopped
+    depends_on:
+      metad0:
+        condition: service_healthy
+      storaged0:
+        condition: service_healthy
+    command:
+      - --meta_server_addrs=metad0:9559
+      - --port=9669
+      - --local_ip=graphd
+      - --ws_ip=graphd
+      - --ws_http_port={{ .graph_http_port }}
+      - --log_dir=/logs
+      - --v=0
+      - --minloglevel=0
+{{- if .enable_auth }}
+      - --enable_authorize=true
+      - --auth_type=password
+{{- end }}
+    ports:
+      - "{{ .expose_bind }}:{{ .graph_port }}:9669"
+    volumes:
+      - {{ .state_dir }}/logs/graphd:/logs
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:{{ .graph_http_port }}/status || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+
+  studio:
+    image: vesoft/nebula-graph-studio:{{ .studio_version }}
+    container_name: homelab-nebulagraph-studio
+    restart: unless-stopped
+    depends_on:
+      graphd:
+        condition: service_healthy
+    ports:
+      - "{{ .expose_bind }}:{{ .studio_port }}:7001"
+
+networks:
+  default:
+    name: homelab-net
+    external: true
