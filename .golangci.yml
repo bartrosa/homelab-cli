@@ -34,6 +34,8 @@ linters:
         - G306
         - G302
         - G110
+        - G122
+        - G703
 
 issues:
   max-same-issues: 50

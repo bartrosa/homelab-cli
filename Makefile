@@ -32,11 +32,11 @@ test: ## Run tests
 	go test ./... -race -cover
 
 lint: ## Run golangci-lint
-	go run github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.1.6 run
+	go run github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.12.2 run
 
 fmt: ## gofmt + golangci formatters (gofumpt/goimports)
 	gofmt -s -w .
-	go run github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.1.6 fmt
+	go run github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.12.2 fmt
 
 vet: ## go vet
 	go vet ./...
