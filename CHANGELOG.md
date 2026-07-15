@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.1] - 2026-07-15
+
 ### Changed
 
 - Terminal output: theme-adaptive colors, bold/underlined table headers, structured `lab version` and `lab iso list|disks` layout (`--no-color` for plain text).
@@ -21,8 +23,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `lab iso write`: progress polls `/sys/block/*/stat` every 250ms (smooth bar, not dd stderr).
 - `scripts/install.sh`: automatically configure shell PATH when installing to a non-standard prefix; `--no-path` to opt out.
 - `scripts/uninstall.sh`: remove homelab-cli PATH block from shell rc on uninstall.
+- CI: upgrade GitHub Actions to Node 24 runtime; bump golangci-lint for Go 1.25 compatibility.
 
-## [0.1.0] - YYYY-MM-DD
+## [0.1.0] - 2026-07-15
 
 ### Added
 
