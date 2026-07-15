@@ -45,18 +45,19 @@ func Detect() Info {
 			info.Packager = PackagerUnknown
 		}
 	case OSLinux:
-		if isSilverblue() {
+		switch {
+		case isSilverblue():
 			info.IsSilverblue = true
 			if hasCmd("rpm-ostree") {
 				info.Packager = PackagerDNF // rpm-ostree install wraps dnf-ish
 			} else {
 				info.Packager = PackagerUnknown
 			}
-		} else if hasCmd("apt-get") {
+		case hasCmd("apt-get"):
 			info.Packager = PackagerAPT
-		} else if hasCmd("dnf") {
+		case hasCmd("dnf"):
 			info.Packager = PackagerDNF
-		} else {
+		default:
 			info.Packager = PackagerUnknown
 		}
 	default:

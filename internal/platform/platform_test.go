@@ -14,6 +14,7 @@ func TestDetect_returnsGOOS(t *testing.T) {
 }
 
 func TestDetect_packagerOnDarwinOrLinux(t *testing.T) {
+	t.Helper()
 	info := platform.Detect()
 	switch info.GOOS {
 	case platform.OSDarwin:
