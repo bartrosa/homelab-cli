@@ -36,7 +36,6 @@ func CreateBootableUSB(ctx context.Context, opts USBOptions, stdout, stderr io.W
 			isoURL:  opts.ISOURL,
 			isoFile: filepath.Base(strings.Split(opts.ISOURL, "?")[0]),
 		}
-		label = spec.isoFile
 	} else {
 		var err error
 		spec, label, err = ResolveBootImage(ctx, opts.Distro)
