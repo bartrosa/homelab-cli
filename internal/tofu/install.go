@@ -60,7 +60,7 @@ func detectMethod(info platform.Info, hasCmd func(string) bool) (Method, error) 
 				Reason: "macOS with Homebrew",
 			}, nil
 		}
-		return Method{}, fmt.Errorf("Homebrew not found; install brew or OpenTofu manually")
+		return Method{}, fmt.Errorf("homebrew not found; install brew or OpenTofu manually")
 
 	case platform.OSLinux:
 		switch info.Packager {
