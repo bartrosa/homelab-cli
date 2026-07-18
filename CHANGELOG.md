@@ -7,39 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Added — v0.3.0 "Developer Environment"
-
-- **`lab stack`** (rename from `lab toolchain`; aliases `toolchain`, `tc`): component registry, dependency-ordered install, presets, GPU detection, shell PATH management (`shellrc`).
-- **26 stack components** across language, build-tool, container, GPU, VCS, package-manager, and database-embedded categories (Python/Node/Go/Rust/Scala/Kotlin, uv, CUDA/ROCm, DuckDB/SQLite, Docker/Podman, …). No Ruby, no .NET.
-- **`lab services` framework**: compose orchestrator, shared `homelab-net`, embedded templates, stdin prompt engine, secret handling, service presets.
-- **15 services**: postgres (pgvector/postgis/timescaledb plugins), mysql/mariadb, redis, valkey, mongodb, clickhouse, rabbitmq, nats, qdrant, weaviate, prometheus, grafana (auto-provisioned datasources), loki, tempo, minio.
-- **High-level wrappers**: `lab obs up/down`, `lab vector up`, `lab data up`.
-- **Config**: `stack.*` and extended `services.*` (runtime `auto`, instances, presets).
-- **Docs**: [`docs/services.md`](docs/services.md), updated README/commands/configuration.
-- **Tests**: stack orchestrator/presets/shellrc/gpu, services orchestrator/templates/postgres, prompt stdin.
-
-### Changed
-
-- `lab toolchain` → `lab stack` (alias preserved).
-- `services.runtime` default: `auto` (prefer docker on Ubuntu, podman on Silverblue).
-
-### Added — Graph Databases
-
-- Service category: **`graph`**
-- **ArcadeDB** (Apache 2.0) — multi-model graph + document + KV + vector, single container, Studio UI, Cypher/Gremlin/SQL, optional protocol plugins
-- **NebulaGraph** (Apache 2.0) — 4-container compose (metad + storaged + graphd + studio), nGQL, automated post-init for host registration and password setup
-- Service presets: **`graphrag`** (arcadedb + qdrant + minio + postgres), **`graph-lab`** (arcadedb + nebulagraph)
-- **`lab vector`** accepts graph databases with built-in vector search (forwards to `lab services up`)
-- Optional **`PostUpper`** interface for post-compose setup (NebulaGraph)
-- Docs: graph database catalog, licensing rationale, embedded graph alternatives (Kuzu / LadybugDB)
-
 ## [0.2.0] - 2026-07-15
 
-**Provisioning Release** — distribute `lab`, create verified bootable USB installers, and bootstrap Ubuntu or Fedora Silverblue on a fresh OS.
+**v0.2.0** — provisioning new machines (install, ISO/USB, bootstrap essentials), developer environment (`lab stack`, `lab services`), and graph databases.
 
-Implementation landed iteratively in v0.1.0–v0.1.1; v0.2.0 is the documented stable milestone for the full workflow.
-
-### Added
+### Added — Provisioning
 
 - Release plumbing: GoReleaser `.tar.gz`, `.deb`, `.rpm`, and `checksums.txt` for linux/darwin amd64/arm64.
 - `scripts/install.sh` and `scripts/uninstall.sh` — curl install with SHA256 verification, prefix detection, optional PATH setup.
@@ -49,12 +21,35 @@ Implementation landed iteratively in v0.1.0–v0.1.1; v0.2.0 is the documented s
 - Testable process runner: `internal/exec`.
 - Provisioning guide: [`docs/provisioning.md`](docs/provisioning.md).
 
+### Added — Developer environment
+
+- **`lab stack`** (rename from `lab toolchain`; aliases `toolchain`, `tc`): component registry, dependency-ordered install, presets, GPU detection, shell PATH management (`shellrc`).
+- **26 stack components** across language, build-tool, container, GPU, VCS, package-manager, and database-embedded categories (Python/Node/Go/Rust/Scala/Kotlin, uv, CUDA/ROCm, DuckDB/SQLite, Docker/Podman, …). No Ruby, no .NET.
+- **`lab services` framework**: compose orchestrator, shared `homelab-net`, embedded templates, stdin prompt engine, secret handling, service presets.
+- **17 services**: postgres (pgvector/postgis/timescaledb plugins), mysql/mariadb, redis, valkey, mongodb, clickhouse, rabbitmq, nats, qdrant, weaviate, prometheus, grafana (auto-provisioned datasources), loki, tempo, minio, arcadedb, nebulagraph.
+- **High-level wrappers**: `lab obs up/down`, `lab vector up`, `lab data up`.
+- **Config**: `stack.*` and extended `services.*` (runtime `auto`, instances, presets).
+- **Docs**: [`docs/services.md`](docs/services.md), updated README/commands/configuration.
+- **Tests**: stack orchestrator/presets/shellrc/gpu, services orchestrator/templates/postgres, prompt stdin.
+
+### Added — Graph databases
+
+- Service category: **`graph`**
+- **ArcadeDB** (Apache 2.0) — multi-model graph + document + KV + vector, single container, Studio UI, Cypher/Gremlin/SQL, optional protocol plugins
+- **NebulaGraph** (Apache 2.0) — 4-container compose (metad + storaged + graphd + studio), nGQL, automated post-init for host registration and password setup
+- Service presets: **`graphrag`** (arcadedb + qdrant + minio + postgres), **`graph-lab`** (arcadedb + nebulagraph)
+- **`lab vector`** accepts graph databases with built-in vector search (forwards to `lab services up`)
+- Optional **`PostUpper`** interface for post-compose setup (NebulaGraph)
+- Docs: graph database catalog, licensing rationale, embedded graph alternatives (Kuzu / LadybugDB)
+
 ### Changed
 
-- README: v0.2.0 provisioning walkthrough, install/upgrade docs, full command status table.
-- `docs/commands.md`: ISO interactive write, `bootstrap essentials` flags, `self-update` reference.
-- `docs/architecture.md`: adapter model, `internal/iso` and `internal/updater` packages.
-- Terminal UX (carried from v0.1.1): progress bars, GPG key import, theme-adaptive output, interactive ISO picker.
+- `lab toolchain` → `lab stack` (alias preserved).
+- `services.runtime` default: `auto` (prefer docker on Ubuntu, podman on Silverblue).
+- README: provisioning walkthrough, dev stack and services guides, install/upgrade docs, full command status table.
+- `docs/commands.md`: ISO interactive write, `bootstrap essentials` flags, `self-update`, stack and services reference.
+- `docs/architecture.md`: adapter model, `internal/iso`, `internal/updater`, stack and services packages.
+- Terminal UX (from v0.1.1): progress bars, GPG key import, theme-adaptive output, interactive ISO picker.
 - CI: GitHub Actions Node 24 runtime; golangci-lint v2.12.2 for Go 1.25.
 
 ## [0.1.1] - 2026-07-15

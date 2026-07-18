@@ -8,7 +8,7 @@
 
 One binary for bootstrapping machines, language toolchains, compose-backed services, multi-repo workflows, remote deploys, and bootable USB installers — orchestration in Go, thin wrappers around standard system tools.
 
-Module: `github.com/bartrosa/homelab-cli` · Latest release: **v0.2.0** · Next: **v0.3.0** (Developer Environment)
+Module: `github.com/bartrosa/homelab-cli` · Latest release: **v0.2.0**
 
 ## Why?
 
@@ -27,7 +27,7 @@ Homelab work spans dozens of domains: OS packages, runtimes, databases, Git mirr
 |------|---------|
 | **Bootstrap & install** | Laptop/server profiles, essentials for Ubuntu/Silverblue, packages, developer stack (`lab stack`), compose services, verified ISO download and USB burn. |
 | **Stack** | Install languages (Python, Go, Rust, Scala, …), build tools, GPU stacks (CUDA/ROCm), embedded DBs, and managed shell PATH. |
-| **Services** | Init and run 15 compose-backed services (Postgres, Redis, observability, vector DBs, MinIO) on shared `homelab-net`. |
+| **Services** | Init and run 17 compose-backed services (Postgres, Redis, observability, vector/graph DBs, MinIO) on shared `homelab-net`. |
 | **Repos** | GitLab account backup today; clone/sync/status planned. |
 | **Infra & networking** | SSH connect/sync, remote server deploy, PostgreSQL apply, bare-metal DB installers, USB/ISO provisioning. Cluster/GPU/net/storage planned. |
 | **Data / AI / ML** | Stubs for models, notebooks, MLOps, vector DBs, pipelines, agents — vector DB install exists under `baremetal install` today. |
@@ -124,7 +124,7 @@ source ~/.bashrc
 
 Supported ISO resolvers today: **ubuntu-desktop**, **fedora-silverblue** (plus catalog stubs for debian, arch, nixos, …). `lab bootstrap essentials` targets **Ubuntu** and **Fedora Silverblue** (`--target auto|ubuntu|silverblue`).
 
-## Setting up your dev environment (v0.3.0)
+## Setting up your dev environment
 
 After `lab bootstrap essentials`, install a curated developer stack:
 
@@ -141,7 +141,7 @@ Presets include `minimal`, `basic`, `backend`, `frontend`, `systems`, `jvm`, `ml
 
 `lab toolchain` is an alias for `lab stack` (same commands).
 
-## Running services (v0.3.0)
+## Running services
 
 Local data and observability stacks run via Docker/Podman Compose on `homelab-net`:
 

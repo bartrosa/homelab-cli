@@ -2,9 +2,7 @@
 
 > **Legend:** ✅ implemented · 🚧 scaffolded (`not implemented yet`)
 
-**v0.3.0 (Developer Environment):** `lab stack`, full `lab services` framework, and high-level `lab obs` / `lab vector` / `lab data` wrappers.
-
-**v0.2.0 (Provisioning Release):** install script, `lab self-update`, `lab iso *`, and `lab bootstrap essentials` are ✅ ready. See [`provisioning.md`](provisioning.md) for the full new-machine workflow.
+**v0.2.0:** provisioning (`lab self-update`, `lab iso *`, `lab bootstrap essentials`), developer environment (`lab stack`, full `lab services` framework), and high-level `lab obs` / `lab vector` / `lab data` wrappers. See [`provisioning.md`](provisioning.md) for the new-machine workflow.
 
 Run `lab <command> --help` for flags. Global flags apply to all commands: `--config`, `--homelab-root`, `--dry-run`, `--no-color`, `--log-level`, `--log-format`.
 
