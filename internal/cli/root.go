@@ -116,6 +116,7 @@ running local data services, mirroring repositories, operating clusters, and sup
 	add(commands.NewSystemCmd(), "infra")
 	add(commands.NewContainersCmd(), "infra")
 	add(commands.NewNetCmd(), "infra")
+	add(commands.NewTofuCmd(), "infra")
 	add(commands.NewStorageCmd(), "infra")
 
 	add(commands.NewModelsCmd(), "data")
