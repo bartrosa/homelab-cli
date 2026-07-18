@@ -59,6 +59,7 @@ Stub commands (`commands.StubRunE`) reserve the CLI surface until each adapter s
 | `internal/iso` | ISO catalog, download, verify, burn | gpg, wget/curl, dd, lsblk |
 | `internal/baremetal` | DB installers on Linux | curl, apt, sudo, systemd |
 | `internal/updater` | In-place binary upgrade | GitHub releases API |
+| `internal/tofu` | Install OpenTofu + orchestrate tofu on IaC stacks | tofu, brew/apt/dnf/snap, official installer script |
 
 ## Cross-cutting
 
@@ -79,7 +80,7 @@ Stub commands (`commands.StubRunE`) reserve the CLI surface until each adapter s
 |----------|----------|
 | `foundation` | bootstrap, pkg, toolchain, services, **iso** |
 | `repos` | repos |
-| `infra` | server, postgres, baremetal, system, ssh, cluster, gpu, containers, net, storage |
+| `infra` | server, postgres, baremetal, system, ssh, cluster, gpu, containers, net, tofu, storage |
 | `data` | models, data, notebooks, mlops, vector, pipelines, agents |
 | `workflow` | obs, logs, templates, media, mcp |
 | `meta` | version, **self-update** |
