@@ -104,6 +104,7 @@ running local data services, mirroring repositories, operating clusters, and sup
 	add(commands.NewPkgCmd(), "foundation")
 	add(commands.NewStackCmd(), "foundation")
 	add(commands.NewServicesCmd(), "foundation")
+	add(commands.NewPodmanCmd(), "foundation")
 
 	add(commands.NewReposCmd(), "repos")
 
